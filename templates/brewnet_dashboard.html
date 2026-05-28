@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrewNet Cafe — Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream: #FAF7F2; --cream-d: #F0E8D8; --cream-dd: #E4D8C4;
+      --warm-white: #FFFDF9; --espresso: #2C1A0E; --espresso-m: #3D2416; --espresso-l: #5C3A24;
+      --latte: #C4956A; --latte-d: #A07848; --latte-l: #E4C498; --latte-p: #F2E0C4;
+      --grey: #9A8C7C; --grey-l: #C0B0A0; --red: #C93535; --green: #2E7D52;
+      --green-bg: rgba(46,125,82,.08); --amber: #C47C1A; --amber-bg: rgba(196,124,26,.08);
+      --border: rgba(44,26,14,.12); --border-m: rgba(44,26,14,.20);
+      --sh-sm: 0 1px 4px rgba(44,26,14,.08); --sh-md: 0 4px 16px rgba(44,26,14,.10);
+      --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans:  'DM Sans', system-ui, sans-serif;
+    }
+    html, body { height: 100%; font-family: var(--sans); background: var(--cream); color: var(--espresso); font-size: 14px; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: var(--latte); border-radius: 3px; }
+
+    /* ── NAV ── */
+    .nav {
+      background: var(--espresso);
+      height: 54px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-left { display: flex; align-items: center; gap: 10px; }
+    .nav-brand { font-family: var(--serif); font-size: 18px; color: #fff; }
+    .nav-brand span { color: var(--latte-l); }
+    .nav-sep { width: 1px; height: 18px; background: rgba(255,255,255,.15); }
+    .nav-section { font-size: 11px; font-weight: 500; color: rgba(255,255,255,.45); letter-spacing: .6px; text-transform: uppercase; }
+
+    .nav-tabs { display: flex; align-items: center; gap: 2px; }
+    .nav-tab {
+      padding: 5px 13px;
+      font-size: 12.5px;
+      color: rgba(255,255,255,.5);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all .12s;
+      text-decoration: none;
+    }
+    .nav-tab:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
+    .nav-tab.active { background: rgba(196,149,106,.2); color: var(--latte-l); }
+
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12.5px;
+      color: rgba(255,255,255,.7);
+    }
+
+    .user-av {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--latte-d);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+    }
+
+    .http-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--red); color: #fff;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 3px;
+      animation: badgePulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse { 0%,100%{box-shadow:0 0 0 0 rgba(201,53,53,.5)} 50%{box-shadow:0 0 0 5px rgba(201,53,53,0)} }
+
+    /* ── LAYOUT ── */
+    .page { display: flex; min-height: calc(100vh - 54px); }
+
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--warm-white);
+      border-right: 1px solid var(--border);
+      padding: 18px 12px;
+    }
+
+    .sb-section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--grey); padding: 0 8px 6px; border-bottom: 1px solid var(--border); margin-bottom: 6px;
+    }
+
+    .sb-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 9px; border-radius: var(--r-sm); margin-bottom: 2px;
+      font-size: 12.5px; color: var(--espresso-l); cursor: pointer; text-decoration: none;
+      border: 1px solid transparent; transition: all .12s;
+    }
+
+    .sb-item:hover { background: var(--cream); border-color: var(--border); }
+    .sb-item.active { background: var(--latte-p); border-color: rgba(196,149,106,.3); color: var(--espresso); font-weight: 600; }
+    .sb-item-icon { font-size: 14px; }
+
+    .sb-badge {
+      margin-left: auto; background: var(--red); color: #fff;
+      font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 10px;
+    }
+
+    .content { flex: 1; padding: 24px 28px; overflow-y: auto; }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px;
+    }
+
+    .page-title { font-family: var(--serif); font-size: 22px; color: var(--espresso); }
+    .page-subtitle { font-size: 12px; color: var(--grey); margin-top: 3px; }
+
+    .session-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--warm-white); border: 1px solid var(--border-m);
+      border-radius: var(--r-md); padding: 8px 14px; font-size: 12px;
+    }
+
+    .session-chip .chip-key { color: var(--grey); }
+    .session-chip .chip-val { font-weight: 600; color: var(--espresso); }
+    .chip-sep { color: var(--border-m); }
+
+    /* ── STAT CARDS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 22px; }
+
+    .stat-card {
+      background: var(--warm-white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 16px 18px;
+      box-shadow: var(--sh-sm);
+    }
+
+    .stat-label { font-size: 11px; font-weight: 600; color: var(--grey); letter-spacing: .4px; text-transform: uppercase; margin-bottom: 6px; }
+    .stat-value { font-family: var(--serif); font-size: 28px; color: var(--espresso); line-height: 1; margin-bottom: 4px; }
+    .stat-delta { font-size: 11px; }
+    .delta-up   { color: var(--green); }
+    .delta-down { color: var(--red); }
+
+    /* ── TWO-COLUMN LOWER ── */
+    .lower { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+
+    /* ── ACTIVITY FEED ── */
+    .panel {
+      background: var(--warm-white);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      overflow: hidden;
+      box-shadow: var(--sh-sm);
+    }
+
+    .panel-head {
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .panel-title { font-weight: 700; font-size: 13px; color: var(--espresso); }
+    .panel-action { font-size: 11.5px; color: var(--latte-d); text-decoration: none; cursor: pointer; }
+    .panel-action:hover { text-decoration: underline; }
+
+    .activity-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 18px; border-bottom: 1px solid var(--border);
+    }
+
+    .activity-row:last-child { border-bottom: none; }
+
+    .act-icon {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 13px;
+      background: var(--cream-d);
+    }
+
+    .act-text { flex: 1; font-size: 12.5px; color: var(--espresso-l); line-height: 1.45; }
+    .act-text strong { color: var(--espresso); font-weight: 600; }
+    .act-time { font-size: 11px; color: var(--grey); white-space: nowrap; }
+
+    /* ── SESSION / TASK PANEL ── */
+    .session-info { padding: 16px; }
+
+    .si-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 7px 0; border-bottom: 1px solid var(--border);
+      font-size: 12.5px;
+    }
+
+    .si-row:last-child { border-bottom: none; }
+    .si-key { color: var(--grey); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
+    .si-val { font-weight: 600; color: var(--espresso); }
+
+    .access-level {
+      display: inline-block;
+      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px;
+    }
+
+    .level-admin   { background: rgba(201,53,53,.1); color: var(--red); }
+    .level-manager { background: var(--amber-bg); color: var(--amber); }
+    .level-barista { background: var(--green-bg); color: var(--green); }
+
+    /* Tasks */
+    .task-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 7px 16px; border-bottom: 1px solid var(--border);
+      font-size: 12px; color: var(--espresso-l); line-height: 1.4;
+    }
+
+    .task-item:last-child { border-bottom: none; }
+    .task-check { width: 13px; height: 13px; border: 1.5px solid var(--border-m); border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+    .task-urgent { color: var(--red); font-weight: 600; }
+
+    .task-badge {
+      display: inline-block; font-size: 9px; font-weight: 700;
+      padding: 1px 5px; border-radius: 2px; margin-left: 5px;
+    }
+
+    .tb-urg { background: rgba(201,53,53,.1); color: var(--red); }
+    .tb-new { background: var(--green-bg); color: var(--green); }
+
+    /* Sign out */
+    .btn-signout {
+      display: block; width: 100%;
+      padding: 9px; margin: 14px 14px 14px;
+      width: calc(100% - 28px);
+      background: transparent;
+      border: 1.5px solid var(--border-m);
+      border-radius: var(--r-sm);
+      font-family: var(--sans);
+      font-size: 12.5px; color: var(--grey);
+      cursor: pointer; text-align: center;
+      transition: all .15s;
+    }
+
+    .btn-signout:hover { border-color: var(--espresso-l); color: var(--espresso); }
+
+    @media (max-width: 1100px) {
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .lower { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .nav-tabs { display: none; }
+      .content { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-left">
+    <span style="font-size:19px">☕</span>
+    <span class="nav-brand">BrewNet <span>Cafe</span></span>
+    <div class="nav-sep"></div>
+    <div class="nav-tabs">
+      <a class="nav-tab active" href="#">Dashboard</a>
+      <a class="nav-tab" href="#">Roster</a>
+      <a class="nav-tab" href="#">Inventory</a>
+      <a class="nav-tab" href="#">Reports</a>
+      <a class="nav-tab" href="#">Settings</a>
+    </div>
+  </div>
+  <div class="nav-left" style="gap:14px">
+    <div class="http-badge">⚠ HTTP — NOT SECURE</div>
+    <div class="nav-user">
+      <div class="user-av" id="userAv">??</div>
+      <span id="userLabel">Loading…</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-section-title">Main Menu</div>
+    <a class="sb-item active" href="#"><span class="sb-item-icon">📊</span>Dashboard</a>
+    <a class="sb-item" href="#"><span class="sb-item-icon">👥</span>Staff Roster</a>
+    <a class="sb-item" href="#"><span class="sb-item-icon">📦</span>Inventory</a>
+    <a class="sb-item" href="#"><span class="sb-item-icon">💰</span>POS &amp; Sales</a>
+    <a class="sb-item" href="#"><span class="sb-item-icon">📋</span>Reports <span class="sb-badge">3</span></a>
+    <a class="sb-item" href="#"><span class="sb-item-icon">🛎️</span>Ordering</a>
+    <a class="sb-item" href="#"><span class="sb-item-icon">⚙️</span>Settings</a>
+
+    <div style="margin-top:20px">
+      <div class="sb-section-title">Tools</div>
+      <a class="sb-item" href="#"><span class="sb-item-icon">🗓️</span>Shift Planner</a>
+      <a class="sb-item" href="#"><span class="sb-item-icon">📬</span>Messages</a>
+      <a class="sb-item" href="#"><span class="sb-item-icon">🛠️</span>IT Support</a>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Good morning 👋</div>
+        <div class="page-subtitle" id="subGreet">Loading overview…</div>
+      </div>
+      <div class="session-chip">
+        <span class="chip-key">Signed in as</span>
+        <span class="chip-val" id="chipUser">—</span>
+        <span class="chip-sep">·</span>
+        <span class="chip-key">Role</span>
+        <span class="chip-val" id="chipRole">—</span>
+        <span class="chip-sep">·</span>
+        <span id="chipTime">—</span>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Today's Revenue</div>
+        <div class="stat-value">$3,847</div>
+        <div class="stat-delta delta-up">↑ 12% vs yesterday</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Orders Completed</div>
+        <div class="stat-value">214</div>
+        <div class="stat-delta delta-up">↑ 8 more than avg</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Staff On-Shift</div>
+        <div class="stat-value">5</div>
+        <div class="stat-delta" style="color:var(--grey)">3 starting 11:00–13:00</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Inventory Alerts</div>
+        <div class="stat-value">3</div>
+        <div class="stat-delta delta-down">↓ Oat milk, Syrup, Cups</div>
+      </div>
+    </div>
+
+    <!-- LOWER PANELS -->
+    <div class="lower">
+
+      <!-- Activity feed -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Recent Activity</span>
+          <a class="panel-action" href="#">View all →</a>
+        </div>
+        <div class="activity-row">
+          <div class="act-icon">☕</div>
+          <div class="act-text"><strong>Sophie M.</strong> completed morning opening checklist — all 12 items cleared</div>
+          <div class="act-time">07:48</div>
+        </div>
+        <div class="activity-row">
+          <div class="act-icon">🖥️</div>
+          <div class="act-text"><strong>POS Terminal #2</strong> rebooted automatically after firmware update — Collins St location</div>
+          <div class="act-time">08:55</div>
+        </div>
+        <div class="activity-row">
+          <div class="act-icon">📊</div>
+          <div class="act-text"><strong>James K.</strong> exported weekly staff schedule as PDF — sent to payroll@brewnet.local</div>
+          <div class="act-time">09:02</div>
+        </div>
+        <div class="activity-row">
+          <div class="act-icon">📦</div>
+          <div class="act-text"><strong>Inventory sync</strong> completed — 3 low-stock alerts generated (oat milk, vanilla syrup, takeaway cups)</div>
+          <div class="act-time">09:18</div>
+        </div>
+        <div class="activity-row">
+          <div class="act-icon">👤</div>
+          <div class="act-text"><strong>Shift swap request</strong> received — Connor W. requesting 12:00–19:00 swap with Aisha R. on Friday</div>
+          <div class="act-time">09:31</div>
+        </div>
+        <div class="activity-row">
+          <div class="act-icon">⚠️</div>
+          <div class="act-text"><strong>Security alert</strong> — Admin portal accessed from new device. Verify if authorised.</div>
+          <div class="act-time" id="loginTime" style="color:var(--red);font-weight:600">Just now</div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- Session info -->
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Session Info</span>
+          </div>
+          <div class="session-info">
+            <div class="si-row">
+              <span class="si-key">User</span>
+              <span class="si-val" id="siUser">—</span>
+            </div>
+            <div class="si-row">
+              <span class="si-key">Role</span>
+              <span class="si-val" id="siRole">—</span>
+            </div>
+            <div class="si-row">
+              <span class="si-key">Access Level</span>
+              <span class="si-val" id="siAccess">—</span>
+            </div>
+            <div class="si-row">
+              <span class="si-key">Location</span>
+              <span class="si-val">CBD — Collins St</span>
+            </div>
+            <div class="si-row">
+              <span class="si-key">Login time</span>
+              <span class="si-val" id="siLogin">—</span>
+            </div>
+            <div class="si-row">
+              <span class="si-key">Portal version</span>
+              <span class="si-val">4.1.0</span>
+            </div>
+          </div>
+          <button class="btn-signout" onclick="window.location.href='/'">← Sign Out</button>
+        </div>
+
+        <!-- Pending tasks -->
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Pending Tasks</span>
+            <span class="panel-action" id="taskCount">0 items</span>
+          </div>
+          <div id="taskList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── Role configuration ───────────────────────────────────────────
+const ROLES = {
+  barista: {
+    label: 'Head Barista', access: 'barista',
+    tasks: [
+      { text: 'Complete morning opening checklist', urgent: false },
+      { text: 'Restock milk fridges — low on oat milk', urgent: true, badge: 'URGENT' },
+      { text: 'Clean group heads by 11:00', urgent: false },
+      { text: 'Check pastry display expiry dates', urgent: false },
+    ],
+  },
+  manager: {
+    label: 'Shift Manager', access: 'manager',
+    tasks: [
+      { text: 'Approve 3 pending shift-swap requests', urgent: false },
+      { text: 'Submit weekly wage report — OVERDUE', urgent: true, badge: 'URGENT' },
+      { text: 'Review low-stock inventory alerts (3 items)', urgent: false },
+      { text: 'Update new menu prices in POS', urgent: false, badge: 'NEW' },
+    ],
+  },
+  admin: {
+    label: 'Administrator', access: 'admin',
+    tasks: [
+      { text: 'Rotate all staff portal credentials — security audit', urgent: true, badge: 'URGENT' },
+      { text: 'End-of-month POS reconciliation — due Thursday', urgent: false },
+      { text: 'Approve weekend roster changes (3 pending)', urgent: false },
+      { text: 'Update IT contractor access before maintenance window', urgent: true, badge: 'URGENT' },
+      { text: 'Review Q1 inventory variance report', urgent: false },
+    ],
+  },
+};
+
+// Inject Flask template variables
+const USERNAME = '{{ username }}';
+const ROLE     = '{{ role }}';
+const cfg      = ROLES[ROLE] || ROLES.barista;
+
+// Populate nav / header
+document.getElementById('userAv').textContent    = USERNAME.slice(0,2).toUpperCase();
+document.getElementById('userLabel').textContent = USERNAME;
+document.getElementById('chipUser').textContent  = USERNAME;
+document.getElementById('chipRole').textContent  = cfg.label;
+document.getElementById('subGreet').textContent  =
+  `Collins St location · ${new Date().toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long' })}`;
+
+// Session info panel
+document.getElementById('siUser').textContent  = USERNAME;
+document.getElementById('siRole').textContent  = cfg.label;
+
+const accessEl = document.getElementById('siAccess');
+const lvlClass = { admin: 'level-admin', manager: 'level-manager', barista: 'level-barista' }[cfg.access] || 'level-barista';
+accessEl.innerHTML = `<span class="access-level ${lvlClass}">${cfg.access.toUpperCase()}</span>`;
+
+const now = new Date();
+document.getElementById('siLogin').textContent = now.toLocaleTimeString('en-AU', { hour12: true });
+document.getElementById('chipTime').textContent = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true });
+document.getElementById('loginTime').textContent = 'Just now (' + now.toLocaleTimeString('en-AU', { hour12: true }) + ')';
+
+// Build task list
+const taskList = document.getElementById('taskList');
+document.getElementById('taskCount').textContent = cfg.tasks.length + ' items';
+
+cfg.tasks.forEach(function(t) {
+  const div = document.createElement('div');
+  div.className = 'task-item';
+  let badge = '';
+  if (t.badge === 'URGENT') badge = '<span class="task-badge tb-urg">URGENT</span>';
+  if (t.badge === 'NEW')    badge = '<span class="task-badge tb-new">NEW</span>';
+  div.innerHTML = `<span class="task-check"></span><span class="${t.urgent ? 'task-urgent' : ''}">${t.text}${badge}</span>`;
+  taskList.appendChild(div);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureBank — Online Banking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C10;--surface:#0D1117;--border:#21262D;--border2:#30363D;
+  --text:#E6EDF3;--muted:#8B949E;--accent:#58A6FF;--green:#3FB950;--red:#F85149;
+  --navy:#1C3151;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+
+/* ══ LOGIN STATE ══ */
+#stateLogin{min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px;}
+
+.login-card{width:100%;max-width:400px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.6);}
+
+.login-top{background:#0D2137;border-bottom:1px solid rgba(88,166,255,.15);
+  padding:28px 24px;text-align:center;}
+.bank-logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px;}
+.bank-logo-name{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--text);letter-spacing:.04em;}
+.bank-logo-name span{color:var(--accent);}
+.login-top-sub{font-size:12px;color:rgba(88,166,255,.6);}
+
+.login-body{padding:28px 24px 20px;}
+.lf{margin-bottom:16px;}
+.lf label{display:block;font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.input-wrap{position:relative;}
+.lf input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;
+  padding:11px 42px 11px 13px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;
+  transition:border-color .15s,box-shadow .15s;}
+.lf input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(88,166,255,.12);}
+.lf input::placeholder{color:var(--border2);}
+.toggle-pw{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;
+  padding:4px;line-height:1;transition:color .15s;}
+.toggle-pw:hover{color:var(--text);}
+
+.error-msg{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);
+  border-radius:5px;padding:9px 12px;font-family:var(--mono);font-size:11px;
+  color:var(--red);margin-bottom:12px;display:none;}
+.btn-login{width:100%;padding:12px;background:var(--accent);color:#000;border:none;
+  border-radius:6px;font-family:var(--mono);font-size:13px;font-weight:600;
+  letter-spacing:.06em;cursor:pointer;transition:background .15s;}
+.btn-login:hover{background:#79b8ff;}
+.btn-login:disabled{background:var(--border2);color:var(--muted);cursor:not-allowed;}
+.login-foot{padding:0 24px 18px;text-align:center;font-family:var(--mono);
+  font-size:10px;color:var(--border2);margin-top:12px;}
+
+/* ══ DASHBOARD STATE ══ */
+#stateDashboard{display:none;background:#EFF1F5;min-height:100vh;font-family:var(--sans);}
+
+.db-nav{background:var(--navy);height:56px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 28px;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);position:sticky;top:0;z-index:50;}
+.db-nav-logo{font-family:var(--mono);font-size:16px;font-weight:600;color:#fff;letter-spacing:.04em;}
+.db-nav-logo span{color:#7EBFFF;}
+.db-nav-meta{font-size:11px;color:rgba(255,255,255,.45);}
+
+/* Alert */
+.alert-banner{background:#FEF3C7;border-bottom:2px solid #F59E0B;
+  padding:11px 28px;display:flex;align-items:center;gap:10px;
+  font-size:13px;color:#92400E;font-weight:500;}
+
+.db-content{max-width:1000px;margin:0 auto;padding:28px 24px 60px;}
+.sec-heading{font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:#6B7280;margin-bottom:14px;}
+
+/* Account card */
+.acc-card{background:#fff;border-radius:10px;padding:20px 24px;
+  box-shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04);
+  border:1px solid #E5E7EB;border-top:3px solid #DC2626;
+  margin-bottom:28px;}
+.acc-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.acc-name{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6B7280;margin-bottom:6px;}
+.acc-holder{font-size:16px;font-weight:700;color:#111827;margin-bottom:4px;}
+.acc-bsb{font-family:var(--mono);font-size:11px;color:#9CA3AF;}
+.acc-balance-wrap{text-align:right;}
+.acc-balance-label{font-size:11px;color:#6B7280;margin-bottom:2px;}
+.acc-balance{font-family:var(--mono);font-size:26px;font-weight:700;color:#111827;}
+.acc-badge{display:inline-block;margin-top:6px;padding:3px 8px;border-radius:3px;
+  font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.08em;
+  background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;}
+
+/* Transactions */
+.tx-card{background:#fff;border-radius:10px;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04);
+  border:1px solid #E5E7EB;margin-bottom:24px;}
+.tx-header{padding:16px 20px;border-bottom:1px solid #F3F4F6;
+  display:flex;align-items:center;justify-content:space-between;}
+.tx-title{font-size:14px;font-weight:600;color:#111827;}
+.tx-sub{font-family:var(--mono);font-size:11px;color:#9CA3AF;}
+
+table.tx-table{width:100%;border-collapse:collapse;}
+.tx-table th{font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:#9CA3AF;
+  padding:10px 20px;text-align:left;border-bottom:1px solid #F3F4F6;background:#FAFAFA;}
+.tx-table td{padding:13px 20px;font-size:13px;color:#374151;
+  border-bottom:1px solid #F9FAFB;vertical-align:middle;}
+.tx-table tr:last-child td{border-bottom:none;}
+.tx-table tr:hover td{background:#FAFAFA;}
+.tx-table tr.stolen td{background:rgba(220,38,38,.04);}
+
+.tx-date{font-family:var(--mono);font-size:12px;color:#6B7280;white-space:nowrap;}
+.tx-time{font-size:11px;color:#9CA3AF;font-family:var(--mono);margin-top:2px;}
+.tx-desc{font-weight:500;color:#111827;}
+.tx-ref{font-size:11px;color:#9CA3AF;font-family:var(--mono);margin-top:2px;}
+.tx-amount{font-family:var(--mono);font-size:13px;font-weight:600;text-align:right;white-space:nowrap;}
+.tx-amount.debit{color:#DC2626;}
+.tx-amount.credit{color:#065F46;}
+
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;
+  border-radius:20px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;}
+.pill-stolen{background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;}
+.pill-ok{background:#F3F4F6;color:#6B7280;}
+
+.tx-action-btn{padding:5px 12px;border:1px solid var(--navy);border-radius:4px;
+  background:transparent;color:var(--navy);font-family:var(--mono);font-size:10px;
+  font-weight:600;letter-spacing:.06em;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.tx-action-btn:hover{background:var(--navy);color:#fff;}
+
+/* Recovery Panel */
+#recoveryPanel{display:none;background:#fff;border-radius:10px;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04);
+  border:1px solid #E5E7EB;border-top:3px solid #1C3151;margin-bottom:24px;}
+.rp-header{padding:18px 24px;border-bottom:1px solid #E5E7EB;}
+.rp-title{font-size:15px;font-weight:700;color:#1C3151;margin-bottom:2px;}
+.rp-sub{font-size:12px;color:#6B7280;}
+.rp-body{padding:20px 24px;}
+
+.rp-detail-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:20px;}
+.rp-detail-label{font-family:var(--mono);font-size:9px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:#9CA3AF;margin-bottom:4px;}
+.rp-detail-value{font-family:var(--mono);font-size:12px;font-weight:600;color:#111827;}
+.rp-detail-value.danger{color:#DC2626;}
+
+.recovery-form{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:20px;}
+.recovery-form-title{font-size:13px;font-weight:600;color:#111827;margin-bottom:14px;
+  padding-bottom:10px;border-bottom:1px solid #E5E7EB;}
+.rf{margin-bottom:12px;}
+.rf label{display:block;font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:#6B7280;margin-bottom:5px;}
+.rf input{width:100%;background:#fff;border:1px solid #D1D5DB;border-radius:5px;
+  padding:9px 12px;font-family:var(--mono);font-size:12px;color:#374151;outline:none;transition:border-color .15s;}
+.rf input:focus{border-color:#1C3151;}
+.rf input[readonly]{background:#F3F4F6;color:#9CA3AF;cursor:default;}
+.btn-recover{width:100%;padding:12px;background:#1C3151;color:#fff;border:none;
+  border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:600;
+  letter-spacing:.06em;cursor:pointer;transition:background .15s;margin-top:4px;}
+.btn-recover:hover{background:#2A4A73;}
+.btn-recover:disabled{background:#9CA3AF;cursor:not-allowed;}
+
+/* Success state */
+#stateSuccess{display:none;background:#EFF1F5;min-height:100vh;font-family:var(--sans);}
+.success-wrap{max-width:560px;margin:0 auto;padding:80px 24px;text-align:center;}
+.success-icon{width:80px;height:80px;border-radius:50%;background:#D1FAE5;
+  border:2px solid #34D399;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 24px;font-size:36px;}
+.success-title{font-family:var(--mono);font-size:20px;font-weight:600;color:#065F46;margin-bottom:8px;}
+.success-sub{font-size:14px;color:#374151;margin-bottom:28px;line-height:1.6;}
+.success-card{background:#fff;border:1px solid #E5E7EB;border-radius:10px;
+  padding:20px 24px;text-align:left;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+.sc-row{display:flex;justify-content:space-between;align-items:center;
+  padding:9px 0;border-bottom:1px solid #F3F4F6;font-size:13px;}
+.sc-row:last-child{border-bottom:none;}
+.sc-label{color:#6B7280;font-family:var(--mono);font-size:11px;}
+.sc-value{font-family:var(--mono);font-size:12px;font-weight:600;color:#111827;}
+.sc-value.green{color:#065F46;}
+
+/* ══ CELEBRATION OVERLAY ══ */
+#winnerOverlay{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(2,5,10,.97);
+  align-items:center;justify-content:center;
+  text-align:center;padding:40px 24px;overflow-y:auto;
+}
+#winnerOverlay.show{display:flex;}
+
+.cel-stage{position:relative;z-index:1;max-width:680px;width:100%;}
+
+.cel-eyebrow{
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.25em;
+  color:rgba(88,166,255,.55);text-transform:uppercase;margin-bottom:32px;opacity:0;
+}
+.cel-congrats{
+  font-family:var(--mono);font-size:clamp(26px,5vw,50px);font-weight:600;
+  letter-spacing:.06em;line-height:1.1;margin-bottom:8px;opacity:0;
+  background:linear-gradient(135deg,#58A6FF 0%,#a5d6ff 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 40px rgba(88,166,255,.45));
+}
+.cel-winner-name{
+  font-family:var(--mono);font-size:clamp(40px,8vw,80px);font-weight:600;
+  color:#FFD700;text-transform:uppercase;letter-spacing:.03em;line-height:1;
+  margin-bottom:12px;word-break:break-word;opacity:0;transform-origin:center;
+  filter:drop-shadow(0 0 36px rgba(255,215,0,.55));
+}
+.cel-won{
+  font-family:var(--mono);font-size:clamp(13px,2.2vw,20px);font-weight:600;
+  letter-spacing:.14em;color:#E6EDF3;opacity:0;margin-bottom:40px;
+}
+.cel-divider{
+  height:1px;width:0%;
+  background:linear-gradient(90deg,transparent,rgba(63,185,80,.55),transparent);
+  margin:0 auto 36px;
+}
+.cel-mission{
+  font-size:14px;color:#8B949E;line-height:1.8;margin-bottom:32px;
+  max-width:520px;margin-left:auto;margin-right:auto;opacity:0;
+}
+.cel-mission strong{color:#C9D1D9;}
+.cel-amount-row{
+  display:flex;align-items:center;justify-content:center;gap:20px;
+  opacity:0;margin-bottom:32px;
+}
+.cel-amount-val{
+  font-family:var(--mono);font-size:32px;font-weight:600;color:#3FB950;
+  filter:drop-shadow(0 0 18px rgba(63,185,80,.5));
+}
+.cel-amount-lbl{
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.16em;
+  color:rgba(63,185,80,.6);text-align:left;line-height:1.5;
+}
+.cel-status-row{
+  display:inline-flex;align-items:center;gap:9px;opacity:0;
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.13em;color:#3FB950;
+}
+.cel-pulse{
+  width:8px;height:8px;border-radius:50%;background:#3FB950;flex-shrink:0;
+  animation:cPulse 1.5s ease infinite;
+}
+@keyframes cPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(63,185,80,.6)}
+  60%{box-shadow:0 0 0 10px rgba(63,185,80,0)}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="stateLogin">
+  <div class="login-card">
+    <div class="login-top">
+      <div class="bank-logo-row">
+        <span style="font-size:24px">🏦</span>
+        <span class="bank-logo-name">Secure<span>Bank</span></span>
+      </div>
+      <div class="login-top-sub">Online Banking Portal</div>
+    </div>
+    <div class="login-body">
+      <div class="lf">
+        <label>Username</label>
+        <div class="input-wrap">
+          <input type="text" id="loginUser" placeholder="Enter username" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+      <div class="lf">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="text" id="loginPass" placeholder="Enter password" autocomplete="off">
+          <button class="toggle-pw" onclick="togglePw()" id="pwToggle" title="Show/hide password">🙈</button>
+        </div>
+      </div>
+      <div class="error-msg" id="loginError">Incorrect username or password. Please try again.</div>
+      <button class="btn-login" id="btnLogin" onclick="submitLogin()">Sign In</button>
+    </div>
+    <div class="login-foot">🔒 256-bit SSL Encryption &nbsp;·&nbsp; SecureBank Ltd · AFSL 234567</div>
+  </div>
+</div>
+
+
+<!-- ══ DASHBOARD — hacker's account ══ -->
+<div id="stateDashboard">
+  <nav class="db-nav">
+    <div>
+      <div class="db-nav-logo">Secure<span>Bank</span></div>
+    </div>
+    <div class="db-nav-meta" id="dbNavMeta">Account Portal</div>
+  </nav>
+
+  <div class="alert-banner">
+    ⚠️ &nbsp;<strong>ACCESS NOTICE:</strong> You are now logged into an external account as part of an authorised forensic investigation. Transfer stolen funds back to St Edmunds College Canberra to complete the mission.
+  </div>
+
+  <div class="db-content">
+
+    <!-- Account -->
+    <div class="sec-heading">Account Details</div>
+    <div class="acc-card">
+      <div class="acc-top">
+        <div>
+          <div class="acc-name">SecureBank — Business Account</div>
+          <div class="acc-holder">MERIDIAN DIGITAL HOLDINGS PTY LTD</div>
+          <div class="acc-bsb">BSB 062-518 &nbsp;·&nbsp; ACC 8847-2391</div>
+        </div>
+        <div class="acc-balance-wrap">
+          <div class="acc-balance-label">Current Balance</div>
+          <div class="acc-balance">$85,290.00</div>
+          <div><span class="acc-badge">⚠ INCLUDES STOLEN FUNDS</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions -->
+    <div class="sec-heading">Transaction History</div>
+    <div class="tx-card">
+      <div class="tx-header">
+        <div class="tx-title">Recent Transactions</div>
+        <div class="tx-sub">MERIDIAN DIGITAL HOLDINGS — Last 14 days</div>
+      </div>
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th style="text-align:right">Amount</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="stolen">
+            <td>
+              <div class="tx-date">27 May 2026</div>
+              <div class="tx-time">02:34 AM</div>
+            </td>
+            <td>
+              <div class="tx-desc">ST EDMUNDS COLLEGE CANBERRA</div>
+              <div class="tx-ref">Ref: TXN-93847261 · Inbound Transfer</div>
+            </td>
+            <td><div class="tx-amount credit">+ $47,250.00</div></td>
+            <td><span class="status-pill pill-stolen">⚠ STOLEN FUNDS</span></td>
+            <td><button class="tx-action-btn" onclick="showRecovery()">Return Funds →</button></td>
+          </tr>
+          <tr>
+            <td><div class="tx-date">25 May 2026</div><div class="tx-time">11:42 AM</div></td>
+            <td><div class="tx-desc">NORTHERN SHORES CONSULTING PTY LTD</div><div class="tx-ref">Ref: NSC-INV-0047</div></td>
+            <td><div class="tx-amount credit">+ $23,800.00</div></td>
+            <td><span class="status-pill pill-ok">Cleared</span></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><div class="tx-date">23 May 2026</div><div class="tx-time">03:15 PM</div></td>
+            <td><div class="tx-desc">CASH WITHDRAWAL — ATM</div><div class="tx-ref">Ref: ATM-8823-SYD</div></td>
+            <td><div class="tx-amount debit">− $8,400.00</div></td>
+            <td><span class="status-pill pill-ok">Cleared</span></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><div class="tx-date">20 May 2026</div><div class="tx-time">09:30 AM</div></td>
+            <td><div class="tx-desc">APEX DIGITAL TRADING CO.</div><div class="tx-ref">Ref: ADT-20260520</div></td>
+            <td><div class="tx-amount credit">+ $15,000.00</div></td>
+            <td><span class="status-pill pill-ok">Cleared</span></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><div class="tx-date">18 May 2026</div><div class="tx-time">02:00 PM</div></td>
+            <td><div class="tx-desc">WIRE TRANSFER — OFFSHORE</div><div class="tx-ref">Ref: SWIFT-AU-7741</div></td>
+            <td><div class="tx-amount debit">− $7,360.00</div></td>
+            <td><span class="status-pill pill-ok">Cleared</span></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Recovery Panel -->
+    <div id="recoveryPanel">
+      <div class="rp-header">
+        <div class="rp-title">Return Stolen Funds to St Edmunds College Canberra</div>
+        <div class="rp-sub">Initiate a reversal transfer to return the stolen amount to its rightful owner.</div>
+      </div>
+      <div class="rp-body">
+        <div class="rp-detail-row" style="margin-bottom:20px">
+          <div>
+            <div class="rp-detail-label">Transfer From</div>
+            <div class="rp-detail-value">MERIDIAN DIGITAL HOLDINGS PTY LTD</div>
+          </div>
+          <div>
+            <div class="rp-detail-label">Original Source</div>
+            <div class="rp-detail-value danger">ST EDMUNDS COLLEGE CANBERRA</div>
+          </div>
+          <div>
+            <div class="rp-detail-label">Stolen Amount</div>
+            <div class="rp-detail-value danger">$47,250.00</div>
+          </div>
+          <div>
+            <div class="rp-detail-label">Date of Theft</div>
+            <div class="rp-detail-value">27 May 2026, 02:34 AM</div>
+          </div>
+        </div>
+        <div class="recovery-form">
+          <div class="recovery-form-title">💸 Recovery Transfer</div>
+          <div class="rf">
+            <label>Transfer To</label>
+            <input type="text" readonly value="St Edmunds College Canberra — General Account (BSB 062-234, ACC 1247-8832)">
+          </div>
+          <div class="rf">
+            <label>Amount</label>
+            <input type="text" readonly value="$47,250.00">
+          </div>
+          <div class="rf">
+            <label>Authorisation Code</label>
+            <input type="text" id="authCode" placeholder="Enter any code to authorise" autocomplete="off">
+          </div>
+          <button class="btn-recover" id="btnRecover" onclick="submitRecovery()">
+            ✓ Confirm Transfer — Return $47,250.00 to St Edmunds College
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══ SUCCESS (personal) ══ -->
+<div id="stateSuccess">
+  <nav class="db-nav">
+    <div class="db-nav-logo">Secure<span>Bank</span></div>
+  </nav>
+  <div class="success-wrap">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Transfer Complete</div>
+    <div class="success-sub">You successfully infiltrated the hacker's account and returned the stolen funds to St Edmunds College Canberra. Mission accomplished.</div>
+    <div class="success-card">
+      <div class="sc-row"><span class="sc-label">CASE REF</span><span class="sc-value">FCU-2026-7834</span></div>
+      <div class="sc-row"><span class="sc-label">AMOUNT RETURNED</span><span class="sc-value green">$47,250.00</span></div>
+      <div class="sc-row"><span class="sc-label">RETURNED TO</span><span class="sc-value">St Edmunds College Canberra</span></div>
+      <div class="sc-row"><span class="sc-label">STATUS</span><span class="sc-value green">TRANSFER COMPLETE</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ CELEBRATION OVERLAY ══ -->
+<div id="winnerOverlay">
+  <div class="cel-stage">
+    <div class="cel-eyebrow">St Edmunds College Canberra · Digital Forensics Unit</div>
+    <div class="cel-congrats">CONGRATULATIONS</div>
+    <div class="cel-winner-name" id="winnerName">—</div>
+    <div class="cel-won">YOU WON THE CHALLENGE</div>
+    <div class="cel-divider"></div>
+    <div class="cel-mission" id="winnerDesc">
+      Agent <strong>—</strong> from the St Edmunds College Canberra Digital Forensics Team
+      successfully infiltrated the banking systems of
+      <strong>MERIDIAN DIGITAL HOLDINGS PTY LTD</strong> and executed a forensic
+      fund recovery transfer, returning <strong>$47,250.00</strong> to St Edmunds College
+      Canberra — securing the stolen funds and completing the mission.
+    </div>
+    <div class="cel-amount-row">
+      <div class="cel-amount-val">$47,250.00</div>
+      <div class="cel-amount-lbl">RECOVERED<br>CASE REF: FCU-2026-7834</div>
+    </div>
+    <div class="cel-status-row">
+      <div class="cel-pulse"></div>
+      FUNDS SECURED — ST EDMUNDS COLLEGE CANBERRA
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+// ── Identity ────────────────────────────────────────────
+const raw = sessionStorage.getItem('sb_student');
+if (!raw) { window.location.href = '/join'; }
+const student = JSON.parse(raw || '{}');
+
+// ── Socket ───────────────────────────────────────────────
+const PORT   = {{ port }};
+const socket = io('http://' + window.location.hostname + ':' + PORT);
+
+socket.on('connect', () => {
+  socket.emit('rejoin', { student_id: student.student_id });
+});
+
+socket.on('game_reset', () => {
+  sessionStorage.removeItem('sb_student');
+  window.location.href = '/join';
+});
+
+// Celebration — fires for EVERYONE on this page
+socket.on('winner_found', data => {
+  document.getElementById('winnerName').textContent = data.name;
+  document.getElementById('winnerDesc').innerHTML =
+    `Agent <strong>${data.name}</strong> from the St Edmunds College Canberra Digital Forensics Team
+    successfully infiltrated the banking systems of
+    <strong>MERIDIAN DIGITAL HOLDINGS PTY LTD</strong> and executed a forensic
+    fund recovery transfer, returning <strong>$47,250.00</strong> to St Edmunds College
+    Canberra — securing the stolen funds and completing the mission.`;
+
+  document.getElementById('winnerOverlay').classList.add('show');
+
+  gsap.set('.cel-eyebrow',     { y: 24, opacity: 0 });
+  gsap.set('.cel-congrats',    { y: 36, opacity: 0 });
+  gsap.set('.cel-winner-name', { scale: 0.55, opacity: 0 });
+  gsap.set('.cel-won',         { y: 20, opacity: 0 });
+  gsap.set('.cel-divider',     { width: '0%' });
+  gsap.set('.cel-mission',     { opacity: 0, y: 12 });
+  gsap.set('.cel-amount-row',  { y: 16, opacity: 0 });
+  gsap.set('.cel-status-row',  { opacity: 0 });
+
+  const tl = gsap.timeline({ delay: 0.05 });
+  tl.to('.cel-eyebrow',     { duration: 0.55, opacity: 1, y: 0, ease: 'power3.out' })
+    .to('.cel-congrats',    { duration: 0.65, opacity: 1, y: 0, ease: 'power3.out' }, '-=0.25')
+    .to('.cel-winner-name', { duration: 0.8,  opacity: 1, scale: 1, ease: 'back.out(1.6)' }, '-=0.15')
+    .to('.cel-won',         { duration: 0.5,  opacity: 1, y: 0, ease: 'power3.out' }, '-=0.2')
+    .to('.cel-divider',     { duration: 0.7,  width: '100%', ease: 'power2.inOut' }, '-=0.1')
+    .to('.cel-mission',     { duration: 0.55, opacity: 1, y: 0, ease: 'power2.out' }, '-=0.2')
+    .to('.cel-amount-row',  { duration: 0.55, opacity: 1, y: 0, ease: 'power3.out' }, '-=0.2')
+    .to('.cel-status-row',  { duration: 0.45, opacity: 1, ease: 'power2.out' }, '-=0.15');
+
+  launchConfetti();
+});
+
+function launchConfetti() {
+  const COLORS = ['#FFD700','#3FB950','#58A6FF','#BC8CFF','#E6EDF3','#F0883E'];
+  const fire = (opts) => confetti(Object.assign({
+    particleCount: 90, spread: 72, startVelocity: 58,
+    colors: COLORS, ticks: 240, gravity: 0.85, scalar: 1.1,
+  }, opts));
+
+  fire({ angle: 60,  origin: { x: 0,   y: 0.65 } });
+  fire({ angle: 120, origin: { x: 1,   y: 0.65 } });
+
+  setTimeout(() => {
+    confetti({ particleCount: 180, spread: 110, origin: { x: 0.5, y: 0.4 },
+      colors: COLORS, startVelocity: 38, ticks: 260, gravity: 0.75, scalar: 1.25 });
+  }, 700);
+
+  setTimeout(() => {
+    fire({ angle: 70,  origin: { x: 0,   y: 0.5 } });
+    fire({ angle: 110, origin: { x: 1,   y: 0.5 } });
+  }, 1400);
+
+  setTimeout(() => {
+    const end = Date.now() + 3200;
+    (function frame() {
+      confetti({ particleCount: 4, angle: 60,  spread: 50, origin: { x: 0 }, colors: COLORS });
+      confetti({ particleCount: 4, angle: 120, spread: 50, origin: { x: 1 }, colors: COLORS });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+  }, 2800);
+}
+
+// ── Password toggle (visible by default) ─────────────────
+let pwVisible = true;
+function togglePw() {
+  pwVisible = !pwVisible;
+  const inp = document.getElementById('loginPass');
+  const btn = document.getElementById('pwToggle');
+  inp.type   = pwVisible ? 'text' : 'password';
+  btn.textContent = pwVisible ? '🙈' : '👁️';
+}
+
+// ── Login ─────────────────────────────────────────────────
+document.getElementById('loginUser').addEventListener('keydown', e => { if(e.key==='Enter') submitLogin(); });
+document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') submitLogin(); });
+
+function submitLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  if (!u || !p) return;
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+  document.getElementById('loginError').style.display = 'none';
+  socket.emit('submit_answer', { endpoint: '/bank/login', username: u, password: p });
+}
+
+socket.on('submission_result', data => {
+  if (data.correct) {
+    document.getElementById('dbNavMeta').textContent = 'Logged in as: ' + (student.name || 'Analyst');
+    document.getElementById('stateLogin').style.display     = 'none';
+    document.getElementById('stateDashboard').style.display = 'block';
+  } else {
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginPass').value = '';
+    if (pwVisible) {
+      // keep visible so they can see they need to try again
+    }
+    document.getElementById('loginPass').focus();
+  }
+});
+
+// ── Recovery ──────────────────────────────────────────────
+function showRecovery() {
+  const panel = document.getElementById('recoveryPanel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function submitRecovery() {
+  const code = document.getElementById('authCode').value.trim();
+  if (!code) { document.getElementById('authCode').focus(); return; }
+
+  const btn = document.getElementById('btnRecover');
+  btn.disabled = true;
+  btn.textContent = 'Processing…';
+
+  // Tell server this student completed the recovery
+  socket.emit('recovery_complete');
+
+  // Show personal success screen immediately
+  document.getElementById('stateDashboard').style.display = 'none';
+  document.getElementById('stateSuccess').style.display   = 'block';
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

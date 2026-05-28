@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureBank — Secure Access Portal (HTTPS)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --void:         #040608;
+      --deep:         #080C10;
+      --panel:        #0D1117;
+      --card:         #101820;
+      --card-lt:      #141E28;
+      --border:       #1A2535;
+      --border-md:    #243348;
+      --border-lt:    #2E4060;
+      --green:        #00FF88;
+      --green-dim:    #00CC6A;
+      --green-bg:     rgba(0,255,136,0.06);
+      --green-bg-md:  rgba(0,255,136,0.12);
+      --green-bg-hi:  rgba(0,255,136,0.18);
+      --amber:        #FFB800;
+      --amber-bg:     rgba(255,184,0,0.08);
+      --blue:         #4B9FFF;
+      --blue-dim:     #2A7FDF;
+      --blue-bg:      rgba(75,159,255,0.08);
+      --red:          #FF4B4B;
+      --red-bg:       rgba(255,75,75,0.08);
+      --purple:       #B44BFF;
+      --text-hi:      #E8F0F8;
+      --text-md:      #9AB0C8;
+      --text-lo:      #5A7490;
+      --text-dim:     #3A5068;
+      --mono:         'IBM Plex Mono', 'Courier New', monospace;
+      --sans:         'IBM Plex Sans', system-ui, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--deep);
+      color: var(--text-hi);
+      font-family: var(--sans);
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: var(--panel); }
+    ::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 2px; }
+
+    /* ════════ STATUS BAR ════════ */
+    .statusbar {
+      background: var(--void);
+      border-bottom: 1px solid var(--border);
+      height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 0;
+      flex-shrink: 0;
+    }
+
+    .sb-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: 24px;
+    }
+
+    .sb-logo {
+      width: 28px;
+      height: 28px;
+      border: 1.5px solid var(--green);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: -0.5px;
+      box-shadow: 0 0 8px rgba(0,255,136,0.2);
+    }
+
+    .sb-brand-text {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-hi);
+      letter-spacing: 0.5px;
+    }
+
+    .sb-brand-text span { color: var(--green); }
+
+    .sb-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+      margin: 0 16px;
+    }
+
+    .sb-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+    }
+
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    .pill-https {
+      background: var(--green-bg-md);
+      color: var(--green);
+      border: 1px solid rgba(0,255,136,0.3);
+      box-shadow: 0 0 8px rgba(0,255,136,0.1);
+    }
+
+    .pill-tls {
+      background: var(--blue-bg);
+      color: var(--blue);
+      border: 1px solid rgba(75,159,255,0.2);
+    }
+
+    .pill-enc {
+      background: rgba(180,75,255,0.08);
+      color: var(--purple);
+      border: 1px solid rgba(180,75,255,0.2);
+    }
+
+    .sb-spacer { flex: 1; }
+
+    .sb-clock {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-md);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ════════ TLS BANNER ════════ */
+    .tls-banner {
+      background: linear-gradient(90deg, rgba(0,255,136,0.06) 0%, rgba(0,255,136,0.03) 50%, rgba(0,255,136,0.06) 100%);
+      border-bottom: 1px solid rgba(0,255,136,0.15);
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .tls-icon {
+      font-size: 20px;
+      filter: drop-shadow(0 0 6px rgba(0,255,136,0.5));
+    }
+
+    .tls-banner-text {
+      flex: 1;
+    }
+
+    .tls-banner-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0.5px;
+    }
+
+    .tls-banner-subtitle {
+      font-size: 11px;
+      color: var(--text-lo);
+      margin-top: 1px;
+    }
+
+    .tls-cert-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tls-cert-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-bg);
+      border: 1px solid rgba(0,255,136,0.15);
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green-dim);
+    }
+
+    /* ════════ THREE-COLUMN LAYOUT ════════ */
+    .workspace {
+      display: grid;
+      grid-template-columns: 220px 1fr 260px;
+      height: calc(100vh - 48px - 52px);
+      overflow: hidden;
+    }
+
+    /* ════════ SIDEBARS ════════ */
+    .sidebar-l, .sidebar-r {
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-l { border-right: 1px solid var(--border); }
+    .sidebar-r { border-left:  1px solid var(--border); }
+
+    .sidebar-section {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 14px 12px;
+    }
+
+    .sidebar-section:last-child { border-bottom: none; }
+
+    .ss-title {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-lo);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ss-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 9px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text-md);
+      cursor: pointer;
+      transition: all 0.12s;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover { background: var(--card); border-color: var(--border); color: var(--text-hi); }
+    .nav-item.active { background: var(--green-bg); border-color: rgba(0,255,136,0.15); color: var(--green); }
+
+    .nav-item-icon { font-size: 13px; width: 16px; text-align: center; }
+
+    /* Wireshark demo section */
+    .ws-demo {
+      background: var(--void);
+      border: 1px solid var(--border-md);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .ws-demo-bar {
+      background: #1A1F2A;
+      padding: 6px 10px;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-lo);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ws-demo-body {
+      padding: 8px 10px;
+      font-family: var(--mono);
+      font-size: 9.5px;
+    }
+
+    .ws-row { padding: 2px 0; }
+    .ws-hl { color: var(--green-dim); }
+    .ws-ts { color: var(--text-dim); }
+    .ws-ip { color: var(--blue-dim); }
+    .ws-tls { color: var(--purple); }
+    .ws-enc { color: var(--text-lo); font-style: italic; }
+    .ws-none { color: var(--border-lt); }
+
+    /* Right sidebar info panels */
+    .info-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .ip-title {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-lo);
+      margin-bottom: 7px;
+    }
+
+    .ip-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      padding: 4px 0;
+      font-size: 11px;
+      color: var(--text-md);
+      border-bottom: 1px solid var(--border);
+      line-height: 1.4;
+    }
+
+    .ip-row:last-child { border-bottom: none; }
+    .ip-row-icon { flex-shrink: 0; font-size: 12px; margin-top: 1px; }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .comparison-table th {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-lo);
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .comparison-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .comparison-table tr:last-child td { border-bottom: none; }
+
+    .ct-feature { color: var(--text-md); }
+    .ct-http  { color: var(--red);   font-family: var(--mono); font-size: 10px; }
+    .ct-https { color: var(--green); font-family: var(--mono); font-size: 10px; }
+
+    /* ════════ CENTRE PANEL ════════ */
+    .centre {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--deep);
+    }
+
+    .centre-scroll {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+    }
+
+    /* Login form */
+    .login-wrapper {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .login-logo {
+      width: 56px;
+      height: 56px;
+      border: 2px solid var(--green);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--green);
+      margin: 0 auto 16px;
+      box-shadow: 0 0 20px rgba(0,255,136,0.15), inset 0 0 20px rgba(0,255,136,0.03);
+    }
+
+    .login-title {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-hi);
+      margin-bottom: 5px;
+      letter-spacing: 0.3px;
+    }
+
+    .login-subtitle {
+      font-size: 12px;
+      color: var(--text-lo);
+    }
+
+    .login-card {
+      background: var(--panel);
+      border: 1px solid var(--border-md);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(0,255,136,0.03);
+    }
+
+    .lc-enc-strip {
+      background: var(--green-bg);
+      border-bottom: 1px solid rgba(0,255,136,0.12);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green-dim);
+    }
+
+    .lc-enc-strip-icon { font-size: 12px; }
+
+    .lc-body { padding: 24px 24px 20px; }
+
+    .form-group { margin-bottom: 16px; }
+
+    .field-label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-lo);
+      margin-bottom: 6px;
+    }
+
+    .soc-input {
+      background: var(--void);
+      border: 1px solid var(--border-md);
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-hi);
+      outline: none;
+      width: 100%;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .soc-input:focus {
+      border-color: var(--green-dim);
+      box-shadow: 0 0 0 3px rgba(0,255,136,0.08);
+    }
+
+    .soc-input::placeholder { color: var(--text-dim); }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: var(--green-bg-md);
+      border: 1px solid rgba(0,255,136,0.3);
+      border-radius: 4px;
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 4px;
+    }
+
+    .btn-login:hover {
+      background: var(--green-bg-hi);
+      border-color: var(--green);
+      box-shadow: 0 0 16px rgba(0,255,136,0.15);
+    }
+
+    .lc-footer {
+      padding: 12px 24px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    /* Encrypted note */
+    .enc-note {
+      background: var(--green-bg);
+      border: 1px solid rgba(0,255,136,0.15);
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-top: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .enc-note-icon { font-size: 16px; flex-shrink: 0; }
+
+    .enc-note-text {
+      font-size: 11.5px;
+      color: var(--text-md);
+      line-height: 1.6;
+    }
+
+    .enc-note-text strong { color: var(--green); }
+
+    /* ════════ SUCCESS MODAL ════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4,6,8,0.85);
+      backdrop-filter: blur(6px);
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    .modal-box {
+      background: var(--panel);
+      border: 1px solid rgba(0,255,136,0.3);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 480px;
+      overflow: hidden;
+      animation: slideUp 0.2s cubic-bezier(0.34,1.2,0.64,1);
+    }
+
+    @keyframes slideUp {
+      from { transform:translateY(20px); opacity:0; }
+      to   { transform:translateY(0);    opacity:1; }
+    }
+
+    .modal-hdr {
+      background: var(--green-bg);
+      border-bottom: 1px solid rgba(0,255,136,0.15);
+      padding: 20px 24px 16px;
+    }
+
+    .modal-hdr-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+
+    .modal-hdr h2 {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0.5px;
+    }
+
+    .modal-hdr p { font-size: 12px; color: var(--text-md); margin-top: 5px; }
+
+    .modal-bdy { padding: 20px 24px; }
+
+    .wireshark-compare {
+      background: var(--void);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .wc-hdr {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text-lo);
+    }
+
+    .wc-body { padding: 10px 12px; font-family: var(--mono); font-size: 10px; }
+
+    .wc-row { padding: 3px 0; }
+    .wc-label { color: var(--text-lo); font-size: 9px; letter-spacing: 0.5px; }
+    .wc-val-clear { color: var(--red); }
+    .wc-val-enc   { color: var(--green-dim); }
+
+    .modal-insight {
+      background: var(--green-bg);
+      border: 1px solid rgba(0,255,136,0.15);
+      border-radius: 4px;
+      padding: 12px;
+      font-size: 12px;
+      color: var(--text-md);
+      line-height: 1.6;
+    }
+
+    .modal-insight strong { color: var(--green); }
+
+    .modal-ftr {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 9px 20px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,255,136,0.3);
+      background: var(--green-bg-md);
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .modal-btn:hover {
+      background: var(--green-bg-hi);
+      box-shadow: 0 0 12px rgba(0,255,136,0.15);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  STATUS BAR                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<header class="statusbar">
+  <div class="sb-brand">
+    <div class="sb-logo">SB</div>
+    <span class="sb-brand-text">Secure<span>Bank</span></span>
+  </div>
+  <div class="sb-divider"></div>
+  <span class="sb-pill pill-https">
+    🔒 HTTPS SECURED
+  </span>
+  <div class="sb-divider"></div>
+  <span class="sb-pill pill-tls">
+    <span class="pill-dot" style="background:var(--blue)"></span>TLS 1.3
+  </span>
+  <div class="sb-divider"></div>
+  <span class="sb-pill pill-enc">
+    <span class="pill-dot" style="background:var(--purple)"></span>E2E ENCRYPTED
+  </span>
+  <div class="sb-spacer"></div>
+  <span class="sb-clock" id="mainClock">--:--:--</span>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  TLS BANNER                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="tls-banner">
+  <span class="tls-icon">🔐</span>
+  <div class="tls-banner-text">
+    <div class="tls-banner-title">This portal is protected by TLS 1.3 end-to-end encryption</div>
+    <div class="tls-banner-subtitle">All credentials are encrypted before leaving your device — Wireshark cannot read them on this port.</div>
+  </div>
+  <div class="tls-cert-info">
+    <div class="tls-cert-chip">🔏 Self-Signed Cert · RSA-2048</div>
+    <div class="tls-cert-chip">🛡 AES-256-GCM</div>
+    <div class="tls-cert-chip">Port 8443</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  WORKSPACE                                                       -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="workspace">
+
+  <!-- ── LEFT SIDEBAR ── -->
+  <aside class="sidebar-l">
+
+    <div class="sidebar-section">
+      <div class="ss-title">Navigation</div>
+      <div class="nav-item active"><span class="nav-item-icon">🔐</span> Secure Login</div>
+      <div class="nav-item"><span class="nav-item-icon">📊</span> SOC Dashboard</div>
+      <div class="nav-item"><span class="nav-item-icon">📡</span> Threat Monitor</div>
+      <div class="nav-item"><span class="nav-item-icon">👤</span> Account Settings</div>
+      <div class="nav-item"><span class="nav-item-icon">📋</span> Audit Logs</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="ss-title">Wireshark — What you see</div>
+
+      <div class="ws-demo">
+        <div class="ws-demo-bar">
+          🦈 Wireshark · Filter: <span style="color:var(--purple)">tcp.port == 8443</span>
+        </div>
+        <div class="ws-demo-body">
+          <div class="ws-row">
+            <span class="ws-ts">12:04:31</span>
+            <span class="ws-ip"> 10.0.x.x → SB</span>
+          </div>
+          <div class="ws-row">
+            <span class="ws-tls">  TLSv1.3 Client Hello</span>
+          </div>
+          <div class="ws-row">
+            <span class="ws-tls">  TLSv1.3 Server Hello</span>
+          </div>
+          <div class="ws-row">
+            <span class="ws-tls">  TLSv1.3 Change Cipher</span>
+          </div>
+          <div class="ws-row">
+            <span class="ws-enc">  Application Data [encrypted]</span>
+          </div>
+          <div class="ws-row">
+            <span class="ws-enc">  Application Data [encrypted]</span>
+          </div>
+          <div class="ws-row ws-none">
+            ─────────────────────
+          </div>
+          <div class="ws-row">
+            <span class="ws-enc">  ⛔ No readable plaintext.</span>
+          </div>
+          <div class="ws-row">
+            <span class="ws-enc">  ⛔ No credentials visible.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px; font-size:11px; color:var(--text-lo); line-height:1.5;">
+        Apply <code style="font-family:var(--mono); color:var(--green-dim); font-size:10px;">tcp.port == 8443</code>
+        in Wireshark. You'll only see TLS handshake frames — the payload is
+        <strong style="color:var(--green)">encrypted ciphertext</strong>, not readable text.
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="ss-title">TLS Handshake</div>
+
+      <div style="font-family:var(--mono); font-size:9.5px; color:var(--text-lo); line-height:2;">
+        <div style="color:var(--green-dim)">① Client Hello ──────────→</div>
+        <div style="color:var(--green-dim)">② ←──────────── Server Hello</div>
+        <div style="color:var(--green-dim)">③ ←─────────── Certificate</div>
+        <div style="color:var(--green-dim)">④ Key Exchange ──────────→</div>
+        <div style="color:var(--green-dim)">⑤ ←──── Change Cipher Spec</div>
+        <div style="color:var(--purple)">   ═══ ENCRYPTED CHANNEL ═══</div>
+        <div style="color:var(--text-dim)">⑥ POST /login [🔒 ciphertext]</div>
+        <div style="color:var(--text-dim)">⑦ ←── 200 OK [🔒 ciphertext]</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── CENTRE: LOGIN FORM ── -->
+  <div class="centre">
+    <div class="centre-scroll">
+      <div class="login-wrapper">
+
+        <div class="login-header">
+          <div class="login-logo">🔐</div>
+          <div class="login-title">SOC Secure Access</div>
+          <div class="login-subtitle">SecureBank Security Operations Centre — HTTPS Portal</div>
+        </div>
+
+        <div class="login-card">
+          <div class="lc-enc-strip">
+            <span class="lc-enc-strip-icon">🔒</span>
+            Connection encrypted with TLS 1.3 · AES-256-GCM · Port 8443
+          </div>
+
+          <div class="lc-body">
+            <div class="form-group">
+              <label class="field-label" for="lUsername">SOC Username</label>
+              <input
+                class="soc-input"
+                type="text"
+                id="lUsername"
+                placeholder="username@securebank.internal"
+                autocomplete="username"
+                spellcheck="false"
+              >
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="lPassword">Password</label>
+              <input
+                class="soc-input"
+                type="password"
+                id="lPassword"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+              >
+            </div>
+            <button class="btn-login" id="loginBtn" onclick="doLogin()">
+              🔐 SIGN IN SECURELY
+            </button>
+          </div>
+
+          <div class="lc-footer">
+            Forgot password? Contact IT Security · Ext. 7700
+          </div>
+        </div>
+
+        <div class="enc-note">
+          <span class="enc-note-icon">🧪</span>
+          <div class="enc-note-text">
+            <strong>Workshop demo:</strong> Try applying the Wireshark filter
+            <code style="font-family:var(--mono); color:var(--green); font-size:10.5px;">tcp.port == 8443</code>
+            and submitting this form. Unlike the HTTP pages, you'll see only
+            <strong>TLS application data</strong> — your username and password are
+            completely hidden in encrypted ciphertext. No credentials in plaintext. Ever.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT SIDEBAR ── -->
+  <aside class="sidebar-r">
+
+    <div class="sidebar-section">
+      <div class="ss-title">HTTP vs HTTPS</div>
+
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th style="color:var(--red)">HTTP</th>
+            <th style="color:var(--green)">HTTPS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="ct-feature">Encryption</td>
+            <td class="ct-http">✖ None</td>
+            <td class="ct-https">✔ TLS</td>
+          </tr>
+          <tr>
+            <td class="ct-feature">Credentials visible</td>
+            <td class="ct-http">✖ Plaintext</td>
+            <td class="ct-https">✔ Ciphertext</td>
+          </tr>
+          <tr>
+            <td class="ct-feature">Wireshark readable</td>
+            <td class="ct-http">✖ YES</td>
+            <td class="ct-https">✔ NO</td>
+          </tr>
+          <tr>
+            <td class="ct-feature">MITM risk</td>
+            <td class="ct-http">✖ Critical</td>
+            <td class="ct-https">✔ Prevented</td>
+          </tr>
+          <tr>
+            <td class="ct-feature">Server auth</td>
+            <td class="ct-http">✖ None</td>
+            <td class="ct-https">✔ Certificate</td>
+          </tr>
+          <tr>
+            <td class="ct-feature">Integrity check</td>
+            <td class="ct-http">✖ None</td>
+            <td class="ct-https">✔ MAC/HMAC</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="ss-title">What Wireshark Sees</div>
+
+      <div class="info-panel" style="border-color:rgba(255,75,75,0.25);">
+        <div class="ip-title" style="color:var(--red);">⚠ Port 8080/8081 (HTTP)</div>
+        <div class="ip-row">
+          <span class="ip-row-icon">📖</span>
+          <span>Full HTTP headers, URL, method visible</span>
+        </div>
+        <div class="ip-row">
+          <span class="ip-row-icon">🔓</span>
+          <span>POST body: <code style="font-family:var(--mono); color:var(--red); font-size:10px;">username=...&password=...</code> — completely readable</span>
+        </div>
+        <div class="ip-row">
+          <span class="ip-row-icon">🪪</span>
+          <span>Session cookies, auth tokens exposed</span>
+        </div>
+      </div>
+
+      <div class="info-panel" style="border-color:rgba(0,255,136,0.2);">
+        <div class="ip-title" style="color:var(--green);">✔ Port 8443 (HTTPS)</div>
+        <div class="ip-row">
+          <span class="ip-row-icon">🔐</span>
+          <span>Only TLS handshake packets (Client Hello, Server Hello, etc.)</span>
+        </div>
+        <div class="ip-row">
+          <span class="ip-row-icon">🔒</span>
+          <span>Application data shows as <strong style="color:var(--green)">encrypted ciphertext</strong> — zero readable content</span>
+        </div>
+        <div class="ip-row">
+          <span class="ip-row-icon">🛡</span>
+          <span>Even the URL path is hidden once TLS is established</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="ss-title">Key Lesson</div>
+
+      <div class="info-panel" style="background:var(--green-bg); border-color:rgba(0,255,136,0.15);">
+        <div style="font-size:12px; color:var(--text-md); line-height:1.7;">
+          HTTPS doesn't just hide data — it creates a
+          <strong style="color:var(--green)">cryptographically authenticated, integrity-protected tunnel</strong>.
+          Even on a shared WiFi network, an attacker with Wireshark sees only
+          random-looking bytes — no matter what you type into this form.
+        </div>
+      </div>
+
+      <div style="margin-top:10px; font-family:var(--mono); font-size:10px; color:var(--text-lo); line-height:1.8;">
+        <div>TLS 1.3 cipher suite:</div>
+        <div style="color:var(--purple);">TLS_AES_256_GCM_SHA384</div>
+        <div style="margin-top:6px;">Key exchange:</div>
+        <div style="color:var(--purple);">ECDHE (x25519)</div>
+        <div style="margin-top:6px;">Forward secrecy:</div>
+        <div style="color:var(--green-dim);">✔ Enabled — past sessions cannot be decrypted even if key is later compromised</div>
+      </div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  SUCCESS MODAL                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="successModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <span class="modal-hdr-icon">🔐</span>
+      <h2>SESSION ESTABLISHED</h2>
+      <p id="modalUserDisplay">Authenticated — TLS tunnel active</p>
+    </div>
+    <div class="modal-bdy">
+
+      <div class="wireshark-compare">
+        <div class="wc-hdr">WHAT WIRESHARK SAW DURING THIS LOGIN:</div>
+        <div class="wc-body">
+          <div class="wc-row">
+            <span class="wc-label">METHOD  </span>
+            <span class="wc-val-enc">POST /internal/soc/login [ENCRYPTED]</span>
+          </div>
+          <div class="wc-row">
+            <span class="wc-label">USERNAME</span>
+            <span class="wc-val-enc">a3f7b2e9c4d1... [CIPHERTEXT]</span>
+          </div>
+          <div class="wc-row">
+            <span class="wc-label">PASSWORD</span>
+            <span class="wc-val-enc">8d2f1c9a7e3b... [CIPHERTEXT]</span>
+          </div>
+          <div class="wc-row">
+            <span class="wc-label">VISIBLE? </span>
+            <span class="wc-val-enc" style="color:var(--green);">NO — zero plaintext. Zero.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-insight">
+        <strong>Compare this to the HTTP pages.</strong> On ports 8080 and 8081,
+        every character you typed appeared in Wireshark in plain English.
+        Here, the entire request — URL, username, password, headers — was
+        encrypted by TLS before a single byte left your device. This is why
+        every login page on the internet <strong>must</strong> use HTTPS.
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="modal-btn" onclick="closeModal()">UNDERSTOOD ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  JAVASCRIPT                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ── Clock ────────────────────────────────────────────────────────
+function tickClock() {
+  const el = document.getElementById('mainClock');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-AU', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  });
+}
+tickClock();
+setInterval(tickClock, 1000);
+
+// ── Login ─────────────────────────────────────────────────────────
+function doLogin() {
+  const user = document.getElementById('lUsername').value.trim();
+  const pass = document.getElementById('lPassword').value.trim();
+
+  if (!user || !pass) {
+    // Shake the form gently
+    const card = document.querySelector('.login-card');
+    card.style.transform = 'translateX(-6px)';
+    setTimeout(() => { card.style.transform = 'translateX(6px)'; }, 80);
+    setTimeout(() => { card.style.transform = 'translateX(0)'; }, 160);
+    card.style.transition = 'transform 0.08s ease';
+    return;
+  }
+
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = '🔐 ESTABLISHING SECURE SESSION…';
+  btn.disabled    = true;
+
+  // Simulate TLS session establishment delay
+  setTimeout(function() {
+    document.getElementById('modalUserDisplay').textContent =
+      `Authenticated as ${escapeHtml(user)} — TLS tunnel active`;
+    document.getElementById('successModal').style.display = 'flex';
+
+    btn.textContent = '🔐 SIGN IN SECURELY';
+    btn.disabled    = false;
+    document.getElementById('lPassword').value = '';
+  }, 900);
+}
+
+function closeModal() {
+  document.getElementById('successModal').style.display = 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    if (document.activeElement === document.getElementById('lUsername') ||
+        document.activeElement === document.getElementById('lPassword')) {
+      doLogin();
+    }
+  }
+  if (e.key === 'Escape') closeModal();
+});
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+
+</body>
+</html>

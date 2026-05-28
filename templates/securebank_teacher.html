@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureBank — Instructor Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C10;--surface:#0D1117;--surface2:#161B22;--border:#21262D;--border2:#30363D;
+  --text:#E6EDF3;--muted:#8B949E;--accent:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;}
+
+/* TOP BAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:50px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+  position:sticky;top:0;z-index:10;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.logo{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.08em;}
+.logo span{color:var(--muted);font-weight:400}
+.instructor-badge{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;
+  color:#BC8CFF;background:rgba(188,140,255,.1);border:1px solid rgba(188,140,255,.35);
+  padding:2px 8px;border-radius:3px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.conn-pill{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--muted);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
+.dot.off{background:var(--red);}
+#clock{font-family:var(--mono);font-size:12px;color:var(--muted);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:320px 1fr;gap:0;min-height:calc(100vh - 50px);}
+
+/* LEFT PANEL */
+.left{border-right:1px solid var(--border);padding:24px;display:flex;flex-direction:column;gap:20px;}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.panel-head{background:var(--surface2);border-bottom:1px solid var(--border);padding:11px 16px;
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.12em;
+  color:var(--muted);text-transform:uppercase;}
+.panel-body{padding:16px;}
+
+/* Fields */
+.field{margin-bottom:14px;}
+.field:last-of-type{margin-bottom:0;}
+.field label{display:block;font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.field input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;
+  padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;
+  transition:border-color .15s;}
+.field input:focus{border-color:var(--accent);}
+
+/* Buttons */
+.btn{width:100%;padding:10px;border:none;border-radius:6px;font-family:var(--mono);
+  font-size:12px;font-weight:600;letter-spacing:.06em;cursor:pointer;transition:all .15s;margin-top:8px;}
+.btn-save{background:var(--accent);color:#000;}
+.btn-save:hover{background:#79b8ff;}
+.btn-start{background:var(--green);color:#000;font-size:13px;padding:13px;}
+.btn-start:hover{background:#56d364;}
+.btn-start:disabled{background:var(--border2);color:var(--muted);cursor:not-allowed;}
+.btn-reset{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-reset:hover{border-color:var(--text);color:var(--text);}
+
+/* Status msg */
+.status-msg{font-family:var(--mono);font-size:11px;padding:7px 10px;border-radius:4px;
+  margin-top:8px;display:none;}
+.status-msg.ok{background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);
+  color:var(--green);display:block;}
+.status-msg.err{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);
+  color:var(--red);display:block;}
+
+/* Game status badge */
+.game-phase{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;
+  padding:3px 8px;border-radius:3px;}
+.phase-lobby{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.3);color:var(--amber);}
+.phase-running{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);color:var(--green);}
+.phase-ended{background:rgba(139,148,158,.1);border:1px solid var(--border2);color:var(--muted);}
+
+/* RIGHT PANEL */
+.right{padding:24px;display:flex;flex-direction:column;gap:20px;}
+
+/* Winner banner */
+#winnerBanner{display:none;background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.3);
+  border-radius:8px;padding:16px 20px;text-align:center;}
+#winnerBanner.show{display:block;}
+.wb-label{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;
+  color:var(--green);margin-bottom:6px;}
+.wb-name{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.wb-sub{font-size:12px;color:var(--muted);}
+
+/* Student list */
+.student-list{max-height:400px;overflow-y:auto;}
+.student-list::-webkit-scrollbar{width:3px;}
+.student-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.student-item{display:flex;align-items:center;gap:10px;padding:10px 16px;
+  border-bottom:1px solid var(--border);}
+.student-item:last-child{border-bottom:none;}
+.s-avatar{width:30px;height:30px;border-radius:5px;background:rgba(88,166,255,.12);
+  border:1px solid rgba(88,166,255,.25);display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;}
+.s-name{flex:1;font-weight:500;font-size:13px;}
+.s-status{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;
+  border-radius:3px;flex-shrink:0;}
+.ss-waiting{background:rgba(139,148,158,.1);border:1px solid var(--border2);color:var(--muted);}
+.ss-playing{background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);color:var(--accent);}
+.ss-correct{background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);color:var(--green);}
+.ss-wrong{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);color:var(--red);}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:12px;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">SECURE<span>BANK</span></div>
+    <div class="instructor-badge">⬡ INSTRUCTOR</div>
+  </div>
+  <div class="topbar-right">
+    <div class="conn-pill"><div class="dot" id="connDot"></div><span id="connLabel">Connecting…</span></div>
+    <span id="gamePhase" class="game-phase phase-lobby">LOBBY</span>
+    <div id="clock"></div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: controls -->
+  <div class="left">
+
+    <!-- Credentials -->
+    <div class="panel">
+      <div class="panel-head">Correct Credentials</div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Username</label>
+          <input type="text" id="cfgUsername" value="soc.admin.rowe">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="text" id="cfgPassword" value="Sb@nk#S3cure99">
+        </div>
+        <button class="btn btn-save" onclick="saveCreds()">Save Credentials</button>
+        <div class="status-msg" id="saveMsg"></div>
+      </div>
+    </div>
+
+    <!-- Game controls -->
+    <div class="panel">
+      <div class="panel-head">Game Controls</div>
+      <div class="panel-body">
+        <button class="btn btn-start" id="btnStart" onclick="startGame()">▶ Start Game</button>
+        <button class="btn btn-reset" onclick="resetGame()">↺ Reset</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: live view -->
+  <div class="right">
+
+    <!-- Winner banner (hidden until someone wins) -->
+    <div id="winnerBanner">
+      <div class="wb-label">💰 FUNDS RECOVERED</div>
+      <div class="wb-name" id="winnerName">—</div>
+      <div class="wb-sub">has returned $47,250.00 to St Edmunds College Canberra</div>
+    </div>
+
+    <!-- Students -->
+    <div class="panel" style="flex:1">
+      <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Students</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">
+          <span id="studentCount">0</span> connected
+        </span>
+      </div>
+      <div class="student-list" id="studentList">
+        <div class="empty-state">No students connected yet.<br>Share: <strong>http://[your-ip]:8081/join</strong></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const PORT   = {{ port }};
+const socket = io('http://' + window.location.hostname + ':' + PORT);
+
+// ── Connection ────────────────────────────────────
+socket.on('connect', () => {
+  socket.emit('teacher_connect');
+  document.getElementById('connDot').className   = 'dot';
+  document.getElementById('connLabel').textContent = 'Connected';
+});
+socket.on('disconnect', () => {
+  document.getElementById('connDot').className   = 'dot off';
+  document.getElementById('connLabel').textContent = 'Disconnected';
+});
+
+// ── Restore state on (re)connect ─────────────────
+socket.on('full_state', data => {
+  if (data.correct) {
+    document.getElementById('cfgUsername').value = data.correct.username || '';
+    document.getElementById('cfgPassword').value = data.correct.password || '';
+  }
+  if (data.students) renderStudents(data.students);
+  setPhase(data.status || 'lobby');
+});
+
+// ── Credentials ───────────────────────────────────
+function saveCreds() {
+  const u = document.getElementById('cfgUsername').value.trim();
+  const p = document.getElementById('cfgPassword').value.trim();
+  if (!u || !p) { showMsg('saveMsg','err','Both fields required.'); return; }
+  socket.emit('teacher_save_creds', { username: u, password: p, endpoint: '/bank/login' });
+}
+socket.on('creds_saved', () => showMsg('saveMsg','ok','✓ Saved'));
+
+// ── Game controls ─────────────────────────────────
+function startGame() {
+  if (!confirm('Start the game? All students in the lobby will be redirected to the challenge.')) return;
+  socket.emit('teacher_start');
+}
+function resetGame() {
+  if (!confirm('Reset the game? All progress will be cleared.')) return;
+  socket.emit('teacher_reset');
+}
+
+socket.on('game_started', () => setPhase('running'));
+socket.on('game_reset',   () => {
+  setPhase('lobby');
+  document.getElementById('winnerBanner').classList.remove('show');
+});
+socket.on('end_ack',    () => setPhase('ended'));
+socket.on('game_ended', () => setPhase('ended'));
+
+// ── Students ──────────────────────────────────────
+socket.on('lobby_update', data => renderStudents(data.students || []));
+socket.on('leaderboard_update', data => {
+  const entries = data.entries || data.leaderboard || [];
+  renderStudents(entries.map(e => ({
+    id: e.id, name: e.name, status: e.status,
+  })));
+});
+
+function renderStudents(list) {
+  const el = document.getElementById('studentList');
+  document.getElementById('studentCount').textContent = list.length;
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">No students connected yet.<br>Share: <strong>http://[your-ip]:8081/join</strong></div>';
+    return;
+  }
+  el.innerHTML = list.map(s => {
+    const init = (s.name || '?')[0].toUpperCase();
+    const st   = s.status || 'waiting';
+    const cls  = st === 'correct' ? 'ss-correct'
+               : st === 'wrong'   ? 'ss-wrong'
+               : st === 'investigating' ? 'ss-playing'
+               : 'ss-waiting';
+    const lbl  = st === 'correct' ? 'RECOVERED' : st === 'wrong' ? 'WRONG' :
+                 st === 'investigating' ? 'IN GAME' : 'WAITING';
+    return `<div class="student-item">
+      <div class="s-avatar">${esc(init)}</div>
+      <div class="s-name">${esc(s.name || '—')}</div>
+      <span class="s-status ${cls}">${lbl}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Winner ────────────────────────────────────────
+socket.on('winner_found', data => {
+  document.getElementById('winnerName').textContent = data.name;
+  document.getElementById('winnerBanner').classList.add('show');
+});
+
+// ── Helpers ───────────────────────────────────────
+function setPhase(status) {
+  const el  = document.getElementById('gamePhase');
+  const btn = document.getElementById('btnStart');
+  if (status === 'running') {
+    el.textContent = 'RUNNING'; el.className = 'game-phase phase-running';
+    btn.disabled = true; btn.textContent = '▶ Game Running';
+  } else if (status === 'ended') {
+    el.textContent = 'ENDED'; el.className = 'game-phase phase-ended';
+    btn.disabled = true; btn.textContent = '▶ Game Ended';
+  } else {
+    el.textContent = 'LOBBY'; el.className = 'game-phase phase-lobby';
+    btn.disabled = false; btn.textContent = '▶ Start Game';
+  }
+}
+
+function showMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.className = 'status-msg ' + (type === 'ok' ? 'ok' : 'err');
+  el.textContent = text;
+  setTimeout(() => { el.className = 'status-msg'; }, 3000);
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Clock
+function tick() { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }
+tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>

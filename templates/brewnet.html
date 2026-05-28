@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrewNet Cafe — Staff Portal</title>
+
+  <!--
+    ╔══════════════════════════════════════════════════════════════╗
+    ║         BREWNET CAFE — STAFF CREDENTIAL STORE               ║
+    ║                   CONFIDENTIAL  v4.1.0                      ║
+    ╠══════════════════════════════════════════════════════════════╣
+    ║                                                              ║
+    ║  STAFF LOGIN                                                 ║
+    ║    Username : staff.sophie                                   ║
+    ║    Password : coffee2024                                     ║
+    ║                                                              ║
+    ║  MANAGER LOGIN                                               ║
+    ║    Username : manager.brew                                   ║
+    ║    Password : BrewNet@99                                     ║
+    ║                                                              ║
+    ║  ADMIN LOGIN  ★  RESTRICTED ACCESS                          ║
+    ║    Username : admin.brewnet                                  ║
+    ║    Password : C4feN3t!2025                                   ║
+    ║                                                              ║
+    ║  IT Support : it@brewnet.local  |  Internal Ext. 204        ║
+    ╚══════════════════════════════════════════════════════════════╝
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:    #FAF7F2;
+      --cream-d:  #F0E8D8;
+      --espresso: #2C1A0E;
+      --espresso-m: #3D2416;
+      --espresso-l: #5C3A24;
+      --latte:    #C4956A;
+      --latte-d:  #A07848;
+      --latte-l:  #E4C498;
+      --latte-p:  #F5EBD8;
+      --grey:     #9A8C7C;
+      --grey-l:   #C8BAAA;
+      --red:      #C93535;
+      --border:   rgba(44,26,14,.13);
+      --border-m: rgba(44,26,14,.22);
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans:  'DM Sans', system-ui, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--sans);
+      background: var(--espresso);
+      color: var(--espresso);
+      font-size: 14px;
+    }
+
+    /* subtle texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(196,149,106,.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(196,149,106,.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 46px;
+      background: rgba(20,10,4,.7);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 10;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--serif);
+      font-size: 16px;
+      color: #fff;
+    }
+    .topbar-brand span { color: var(--latte-l); }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .http-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      padding: 3px 9px 3px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      animation: badgePulse 2.4s ease-in-out infinite;
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #fff;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(201,53,53,.55); }
+      50%      { box-shadow: 0 0 0 6px rgba(201,53,53,0); }
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+
+    .topbar-time {
+      font-size: 11px;
+      color: rgba(255,255,255,.35);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── PAGE ── */
+    .page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px 40px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--cream);
+      border-radius: 14px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.06),
+        0 24px 64px rgba(0,0,0,.55),
+        0 4px 12px rgba(0,0,0,.3);
+      overflow: hidden;
+    }
+
+    /* card top strip */
+    .card-header {
+      background: var(--espresso);
+      padding: 28px 28px 24px;
+      text-align: center;
+      border-bottom: 1px solid rgba(196,149,106,.2);
+    }
+
+    .card-logo {
+      font-size: 32px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-family: var(--serif);
+      font-size: 22px;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,.4);
+      letter-spacing: .2px;
+    }
+
+    /* card body */
+    .card-body {
+      padding: 26px 28px 22px;
+    }
+
+    .fg {
+      margin-bottom: 16px;
+    }
+
+    .fg label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      color: var(--espresso-l);
+      margin-bottom: 6px;
+    }
+
+    input[type=text],
+    input[type=password] {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border-m);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--espresso);
+      font-family: var(--sans);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    input:focus {
+      border-color: var(--latte);
+      box-shadow: 0 0 0 3px rgba(196,149,106,.2);
+    }
+
+    input::placeholder { color: var(--grey-l); }
+
+    .btn-signin {
+      width: 100%;
+      margin-top: 6px;
+      padding: 11px;
+      background: var(--espresso);
+      color: var(--latte-l);
+      border: none;
+      border-radius: 7px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: .2px;
+      transition: background .15s, transform .1s;
+    }
+
+    .btn-signin:hover  { background: var(--espresso-m); }
+    .btn-signin:active { transform: scale(.99); }
+
+    .card-footer {
+      padding: 0 28px 20px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+    }
+
+    .card-footer a {
+      color: var(--latte-d);
+      text-decoration: none;
+    }
+    .card-footer a:hover { text-decoration: underline; }
+
+    /* divider */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 16px 0;
+    }
+
+    /* security note */
+    .sec-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      background: var(--latte-p);
+      border: 1px solid rgba(196,149,106,.35);
+      border-radius: 6px;
+      padding: 8px 11px;
+      font-size: 11.5px;
+      color: var(--espresso-l);
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    ☕ BrewNet <span>Cafe</span>
+  </div>
+  <div class="topbar-right">
+    <div class="http-badge"><span class="badge-dot"></span>HTTP — NOT SECURE</div>
+    <span class="topbar-time" id="clock"></span>
+  </div>
+</div>
+
+<!-- LOGIN CARD -->
+<div class="page">
+  <div class="card">
+
+    <div class="card-header">
+      <span class="card-logo">☕</span>
+      <div class="card-title">Staff Sign In</div>
+      <div class="card-sub">BrewNet Cafe Internal Portal · v4.1.0</div>
+    </div>
+
+    <div class="card-body">
+      <form method="POST" action="/login">
+        <div class="fg">
+          <label for="u">Username</label>
+          <input type="text" name="username" id="u"
+                 placeholder="Enter your staff username"
+                 autocomplete="off" spellcheck="false">
+        </div>
+        <div class="fg">
+          <label for="p">Password</label>
+          <input type="password" name="password" id="p"
+                 placeholder="Enter your password"
+                 autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn-signin">Sign In</button>
+      </form>
+
+      <hr class="divider">
+
+      <div class="sec-note">
+        🔒 Protected by BrewNet Security Suite™ 4.1 — authorised staff access only.
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <a href="#">Forgot your password?</a>
+      <a href="#">IT Support · Ext. 204</a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function tick() {
+    document.getElementById('clock').textContent =
+      new Date().toLocaleTimeString('en-AU', { hour12: true });
+  }
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>

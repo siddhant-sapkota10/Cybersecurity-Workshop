@@ -1,0 +1,23 @@
+[req]
+default_bits       = 2048
+prompt             = no
+default_md         = sha256
+distinguished_name = dn
+x509_extensions    = v3_req
+
+[dn]
+C  = AU
+ST = NSW
+L  = Sydney
+O  = Cybersecurity Workshop
+CN = 10.160.193.154
+
+[v3_req]
+subjectAltName = @alt_names
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+
+[alt_names]
+IP.1  = 10.160.193.154
+IP.2  = 127.0.0.1
+DNS.1 = localhost

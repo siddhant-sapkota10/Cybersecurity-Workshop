@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureBank — Forensics Exercise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#080C10;--surface:#0D1117;--border:#21262D;--border2:#30363D;
+    --text:#E6EDF3;--muted:#8B949E;--accent:#58A6FF;--green:#3FB950;
+    --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  }
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+  .strip{position:fixed;top:0;left:0;right:0;height:44px;background:rgba(13,17,23,.9);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--border);display:flex;
+    align-items:center;justify-content:space-between;padding:0 24px;z-index:10;}
+  .strip-brand{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.08em;}
+  .strip-brand span{color:var(--muted);font-weight:400}
+  .ex-badge{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.12em;
+    color:var(--green);background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);
+    padding:2px 8px;border-radius:3px;}
+  .card{width:100%;max-width:560px;background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);}
+  .card-top{background:#0D2137;border-bottom:1px solid rgba(88,166,255,.15);padding:22px 24px;
+    display:flex;align-items:center;gap:14px;}
+  .card-top-icon{font-size:30px;flex-shrink:0;filter:drop-shadow(0 0 12px rgba(88,166,255,.4));}
+  .card-top-title{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text);letter-spacing:.06em;}
+  .card-top-sub{font-size:12px;color:rgba(88,166,255,.6);margin-top:3px;}
+  .card-body{padding:24px 24px 20px;}
+  .scenario{background:rgba(248,81,73,.05);border:1px solid rgba(248,81,73,.18);
+    border-left:3px solid #F85149;border-radius:4px;padding:12px 14px;
+    font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:22px;}
+  .scenario strong{color:var(--text);}
+  .scenario .amount{font-family:var(--mono);color:#F85149;font-weight:600;}
+  .steps-label{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  .steps{display:flex;flex-direction:column;gap:0;margin-bottom:22px;
+    border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+  .step{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;
+    border-bottom:1px solid var(--border);background:var(--bg);}
+  .step:last-child{border-bottom:none;}
+  .step:hover{background:rgba(88,166,255,.03);}
+  .step-num{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent);
+    background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.2);
+    width:22px;height:22px;border-radius:4px;display:flex;align-items:center;
+    justify-content:center;flex-shrink:0;margin-top:1px;}
+  .step-body{flex:1;}
+  .step-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.3;}
+  .step-desc{font-size:12px;color:var(--muted);line-height:1.55;}
+  .step-desc code{font-family:var(--mono);font-size:11px;color:var(--accent);
+    background:rgba(88,166,255,.08);padding:1px 5px;border-radius:3px;}
+  .step-tag{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:600;
+    letter-spacing:.08em;padding:1px 6px;border-radius:3px;margin-top:5px;}
+  .tag-canvas{background:rgba(188,140,255,.1);border:1px solid rgba(188,140,255,.25);color:#BC8CFF;}
+  .tag-wireshark{background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.25);color:var(--accent);}
+  .tag-securebank{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.25);color:#3FB950;}
+  .divider{height:1px;background:var(--border);margin:20px 0;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-family:var(--mono);font-size:10px;font-weight:600;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .field input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;
+    padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;
+    transition:border-color .15s,box-shadow .15s;}
+  .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(88,166,255,.12);}
+  .field input::placeholder{color:rgba(139,148,158,.35);}
+  .btn-join{width:100%;padding:12px;background:var(--accent);color:#000;border:none;
+    border-radius:6px;font-family:var(--mono);font-size:13px;font-weight:600;
+    letter-spacing:.06em;cursor:pointer;transition:background .15s;}
+  .btn-join:hover{background:#79b8ff;}
+  .btn-join:disabled{background:var(--border2);color:var(--muted);cursor:not-allowed;}
+  .card-foot{padding:10px 24px 16px;text-align:center;font-family:var(--mono);
+    font-size:10px;color:rgba(48,54,61,.8);letter-spacing:.06em;}
+
+  /* LOBBY */
+  #stateLobby{display:none;}
+  .lobby-card{width:100%;max-width:560px;background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);}
+  .lobby-top{text-align:center;padding:40px 32px 28px;}
+  .pulse-ring{width:64px;height:64px;border-radius:50%;border:2px solid var(--green);
+    margin:0 auto 24px;display:flex;align-items:center;justify-content:center;
+    position:relative;animation:ringPulse 2s ease-in-out infinite;}
+  .pulse-ring::before{content:'';position:absolute;inset:-10px;border-radius:50%;
+    border:1px solid var(--green);opacity:.3;animation:ringPulse 2s ease-in-out infinite .4s;}
+  @keyframes ringPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.04)}}
+  .lobby-status{font-family:var(--mono);font-size:11px;font-weight:600;
+    letter-spacing:.15em;color:var(--green);text-transform:uppercase;margin-bottom:10px;}
+  .lobby-name{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text);margin-bottom:4px;}
+  .lobby-role{font-size:13px;color:var(--muted);margin-bottom:24px;}
+  .lobby-wait{background:var(--bg);border:1px solid var(--border);border-radius:6px;
+    padding:12px 16px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.6;
+    display:flex;align-items:center;gap:8px;}
+  .wait-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;
+    animation:blink 1.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .lobby-checklist{border-top:1px solid var(--border);padding:20px 28px 24px;}
+  .lobby-checklist-label{font-family:var(--mono);font-size:10px;font-weight:600;
+    letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;}
+  .check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;
+    border-bottom:1px solid var(--border);}
+  .check-item:last-child{border-bottom:none;}
+  .check-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+  .check-body{flex:1;}
+  .check-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+  .check-hint{font-size:12px;color:var(--muted);line-height:1.5;}
+  .check-hint code{font-family:var(--mono);font-size:11px;color:var(--accent);
+    background:rgba(88,166,255,.08);padding:1px 4px;border-radius:3px;}
+  .lobby-foot{padding:0 28px 18px;text-align:center;font-family:var(--mono);
+    font-size:10px;color:rgba(48,54,61,.8);letter-spacing:.06em;}
+</style>
+</head>
+<body>
+<div class="strip">
+  <div class="strip-brand">SECURE<span>BANK</span> · FORENSICS DIVISION</div>
+  <div class="ex-badge">EXERCISE</div>
+</div>
+
+<div id="stateForm">
+  <div class="card">
+    <div class="card-top">
+      <span class="card-top-icon">🛡️</span>
+      <div>
+        <div class="card-top-title">OPERATION VAULT</div>
+        <div class="card-top-sub">St Edmunds College Canberra · Digital Forensics Unit</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="scenario">
+        <strong>INCIDENT REPORT — CASE FCU-2026-7834</strong><br>
+        St Edmunds College Canberra's SecureBank online banking account was compromised by an unknown threat actor operating under the entity <strong>MERIDIAN DIGITAL HOLDINGS PTY LTD</strong>. The attacker accessed the portal over an unencrypted HTTP connection and fraudulently transferred <span class="amount">$47,250.00</span> out of the College's account. Network traffic from the attack was intercepted and preserved as a packet capture. <strong>Your mission: analyse the capture, recover the credentials, and return the stolen funds.</strong>
+      </div>
+
+      <div class="steps-label">Mission Objectives</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Download the packet capture from Canvas</div>
+            <div class="step-desc">Open your Canvas course page and download the file <code>securebank_capture.pcapng</code> from today's workshop activity.</div>
+            <span class="step-tag tag-canvas">Canvas LMS</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Open the capture in Wireshark</div>
+            <div class="step-desc">Launch Wireshark and open the downloaded file. Apply the display filter <code>http</code> to isolate HTTP traffic from the noise.</div>
+            <span class="step-tag tag-wireshark">Wireshark</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Find the stolen credentials</div>
+            <div class="step-desc">Look for a <code>POST</code> request to <code>/bank/login</code>. Inspect the packet and locate the <code>username</code> and <code>password</code> fields in the HTTP form data — these are the attacker's credentials.</div>
+            <span class="step-tag tag-wireshark">Wireshark</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Log into the hacker's SecureBank account</div>
+            <div class="step-desc">When the instructor starts the game, use the credentials you found to log into the SecureBank portal below. You'll gain access to the attacker's account dashboard.</div>
+            <span class="step-tag tag-securebank">SecureBank Portal</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Transfer the funds back to St Edmunds</div>
+            <div class="step-desc">Inside the dashboard, locate the stolen <code>$47,250.00</code> transaction and initiate a return transfer to St Edmunds College Canberra. First to recover the funds wins.</div>
+            <span class="step-tag tag-securebank">SecureBank Portal</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="field">
+        <label>Your Name</label>
+        <input type="text" id="nameInput" placeholder="Enter your full name" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn-join" id="btnJoin" onclick="joinInvestigation()">Join Investigation →</button>
+    </div>
+    <div class="card-foot">ST EDMUNDS COLLEGE CANBERRA · CYBERSECURITY WORKSHOP 2026</div>
+  </div>
+</div>
+
+<div id="stateLobby">
+  <div class="lobby-card">
+    <div class="lobby-top">
+      <div class="pulse-ring"><span style="font-size:26px">🔍</span></div>
+      <div class="lobby-status">Analyst Registered</div>
+      <div class="lobby-name" id="lobbyName">—</div>
+      <div class="lobby-role">Digital Forensics Unit · St Edmunds College Canberra</div>
+      <div class="lobby-wait">
+        <div class="wait-dot"></div>
+        Waiting for instructor to start — complete the steps below while you wait
+      </div>
+    </div>
+    <div class="lobby-checklist">
+      <div class="lobby-checklist-label">While you wait — complete these steps</div>
+      <div class="check-item">
+        <div class="check-icon">📥</div>
+        <div class="check-body">
+          <div class="check-title">Download the packet capture from Canvas</div>
+          <div class="check-hint">Find <code>securebank_capture.pcapng</code> in today's workshop activity and save it to your desktop.</div>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon">🦈</div>
+        <div class="check-body">
+          <div class="check-title">Open the file in Wireshark</div>
+          <div class="check-hint">Launch Wireshark → File → Open. Once loaded, type <code>http</code> in the display filter bar and press Enter.</div>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon">🔎</div>
+        <div class="check-body">
+          <div class="check-title">Find the POST request to <code>/bank/login</code></div>
+          <div class="check-hint">Look for a packet with <code>POST /bank/login</code> in the Info column. Click it, then expand <strong>HTML Form URL Encoded</strong> in the packet details below to reveal the credentials.</div>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon">📝</div>
+        <div class="check-body">
+          <div class="check-title">Write down the username and password</div>
+          <div class="check-hint">Note the <code>username</code> and <code>password</code> values exactly — you'll need them the moment the game starts.</div>
+        </div>
+      </div>
+    </div>
+    <div class="lobby-foot">ST EDMUNDS COLLEGE CANBERRA · CYBERSECURITY WORKSHOP 2026</div>
+  </div>
+</div>
+
+<!-- ══ CELEBRATION OVERLAY ══ -->
+<div id="winnerOverlay" style="display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(2,5,10,.97);align-items:center;justify-content:center;
+  text-align:center;padding:40px 24px;overflow-y:auto;">
+  <div class="cel-stage">
+    <div class="cel-eyebrow">St Edmunds College Canberra · Digital Forensics Unit</div>
+    <div class="cel-congrats">CONGRATULATIONS</div>
+    <div class="cel-winner-name" id="winnerName">—</div>
+    <div class="cel-won">YOU WON THE CHALLENGE</div>
+    <div class="cel-divider"></div>
+    <div class="cel-mission" id="winnerDesc">
+      Agent <strong>—</strong> from the St Edmunds College Canberra Digital Forensics Team
+      successfully infiltrated the banking systems of
+      <strong>MERIDIAN DIGITAL HOLDINGS PTY LTD</strong> and executed a forensic
+      fund recovery transfer, returning <strong>$47,250.00</strong> to St Edmunds College
+      Canberra — securing the stolen funds and completing the mission.
+    </div>
+    <div class="cel-amount-row">
+      <div class="cel-amount-val">$47,250.00</div>
+      <div class="cel-amount-lbl">RECOVERED<br>CASE REF: FCU-2026-7834</div>
+    </div>
+    <div class="cel-status-row">
+      <div class="cel-pulse"></div>
+      FUNDS SECURED — ST EDMUNDS COLLEGE CANBERRA
+    </div>
+  </div>
+</div>
+
+<style>
+.cel-stage{max-width:680px;width:100%;margin:0 auto;}
+.cel-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.25em;color:rgba(88,166,255,.55);text-transform:uppercase;
+  margin-bottom:32px;opacity:0;}
+.cel-congrats{font-family:'IBM Plex Mono',monospace;font-size:clamp(26px,5vw,50px);
+  font-weight:600;letter-spacing:.06em;line-height:1.1;margin-bottom:8px;opacity:0;
+  background:linear-gradient(135deg,#58A6FF 0%,#a5d6ff 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 40px rgba(88,166,255,.45));}
+.cel-winner-name{font-family:'IBM Plex Mono',monospace;font-size:clamp(40px,8vw,80px);
+  font-weight:600;color:#FFD700;text-transform:uppercase;letter-spacing:.03em;
+  line-height:1;margin-bottom:12px;word-break:break-word;opacity:0;
+  filter:drop-shadow(0 0 36px rgba(255,215,0,.55));}
+.cel-won{font-family:'IBM Plex Mono',monospace;font-size:clamp(13px,2.2vw,20px);
+  font-weight:600;letter-spacing:.14em;color:#E6EDF3;opacity:0;margin-bottom:40px;}
+.cel-divider{height:1px;width:0%;margin:0 auto 36px;
+  background:linear-gradient(90deg,transparent,rgba(63,185,80,.55),transparent);}
+.cel-mission{font-size:14px;color:#8B949E;line-height:1.8;margin-bottom:32px;
+  max-width:520px;margin-left:auto;margin-right:auto;opacity:0;}
+.cel-mission strong{color:#C9D1D9;}
+.cel-amount-row{display:flex;align-items:center;justify-content:center;
+  gap:20px;opacity:0;margin-bottom:32px;}
+.cel-amount-val{font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:600;
+  color:#3FB950;filter:drop-shadow(0 0 18px rgba(63,185,80,.5));}
+.cel-amount-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.16em;color:rgba(63,185,80,.6);text-align:left;line-height:1.5;}
+.cel-status-row{display:inline-flex;align-items:center;gap:9px;opacity:0;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  letter-spacing:.13em;color:#3FB950;}
+.cel-pulse{width:8px;height:8px;border-radius:50%;background:#3FB950;flex-shrink:0;
+  animation:cPulse 1.5s ease infinite;}
+@keyframes cPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(63,185,80,.6)}
+  60%{box-shadow:0 0 0 10px rgba(63,185,80,0)}
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const PORT   = {{ port }};
+const socket = io('http://' + window.location.hostname + ':' + PORT);
+
+function joinInvestigation() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) { document.getElementById('nameInput').focus(); return; }
+  document.getElementById('btnJoin').disabled    = true;
+  document.getElementById('btnJoin').textContent = 'Connecting…';
+  socket.emit('join', { name: name, employeeId: '' });
+}
+
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinInvestigation();
+});
+
+socket.on('join_confirmed', data => {
+  sessionStorage.setItem('sb_student', JSON.stringify({ student_id: data.student_id, name: data.name }));
+  document.getElementById('lobbyName').textContent    = data.name;
+  document.getElementById('stateForm').style.display  = 'none';
+  document.getElementById('stateLobby').style.display = 'block';
+});
+
+socket.on('game_start',   () => { window.location.href = '/game'; });
+socket.on('redirect',     d  => { window.location.href = d.url;   });
+
+socket.on('winner_found', data => {
+  document.getElementById('winnerName').textContent = data.name;
+  document.getElementById('winnerDesc').innerHTML =
+    `Agent <strong>${data.name}</strong> from the St Edmunds College Canberra Digital Forensics Team
+    successfully infiltrated the banking systems of
+    <strong>MERIDIAN DIGITAL HOLDINGS PTY LTD</strong> and executed a forensic
+    fund recovery transfer, returning <strong>$47,250.00</strong> to St Edmunds College
+    Canberra — securing the stolen funds and completing the mission.`;
+
+  const overlay = document.getElementById('winnerOverlay');
+  overlay.style.display = 'flex';
+
+  gsap.set('.cel-eyebrow',     { y: 24, opacity: 0 });
+  gsap.set('.cel-congrats',    { y: 36, opacity: 0 });
+  gsap.set('.cel-winner-name', { scale: 0.55, opacity: 0 });
+  gsap.set('.cel-won',         { y: 20, opacity: 0 });
+  gsap.set('.cel-divider',     { width: '0%' });
+  gsap.set('.cel-mission',     { opacity: 0, y: 12 });
+  gsap.set('.cel-amount-row',  { y: 16, opacity: 0 });
+  gsap.set('.cel-status-row',  { opacity: 0 });
+
+  const tl = gsap.timeline({ delay: 0.05 });
+  tl.to('.cel-eyebrow',     { duration: 0.55, opacity: 1, y: 0, ease: 'power3.out' })
+    .to('.cel-congrats',    { duration: 0.65, opacity: 1, y: 0, ease: 'power3.out' }, '-=0.25')
+    .to('.cel-winner-name', { duration: 0.8,  opacity: 1, scale: 1, ease: 'back.out(1.6)' }, '-=0.15')
+    .to('.cel-won',         { duration: 0.5,  opacity: 1, y: 0, ease: 'power3.out' }, '-=0.2')
+    .to('.cel-divider',     { duration: 0.7,  width: '100%', ease: 'power2.inOut' }, '-=0.1')
+    .to('.cel-mission',     { duration: 0.55, opacity: 1, y: 0, ease: 'power2.out' }, '-=0.2')
+    .to('.cel-amount-row',  { duration: 0.55, opacity: 1, y: 0, ease: 'power3.out' }, '-=0.2')
+    .to('.cel-status-row',  { duration: 0.45, opacity: 1, ease: 'power2.out' }, '-=0.15');
+
+  launchConfetti();
+});
+
+function launchConfetti() {
+  const COLORS = ['#FFD700','#3FB950','#58A6FF','#BC8CFF','#E6EDF3','#F0883E'];
+  const fire = (opts) => confetti(Object.assign({
+    particleCount: 90, spread: 72, startVelocity: 58,
+    colors: COLORS, ticks: 240, gravity: 0.85, scalar: 1.1,
+  }, opts));
+
+  fire({ angle: 60,  origin: { x: 0, y: 0.65 } });
+  fire({ angle: 120, origin: { x: 1, y: 0.65 } });
+
+  setTimeout(() => {
+    confetti({ particleCount: 180, spread: 110, origin: { x: 0.5, y: 0.4 },
+      colors: COLORS, startVelocity: 38, ticks: 260, gravity: 0.75, scalar: 1.25 });
+  }, 700);
+
+  setTimeout(() => {
+    fire({ angle: 70,  origin: { x: 0, y: 0.5 } });
+    fire({ angle: 110, origin: { x: 1, y: 0.5 } });
+  }, 1400);
+
+  setTimeout(() => {
+    const end = Date.now() + 3200;
+    (function frame() {
+      confetti({ particleCount: 4, angle: 60,  spread: 50, origin: { x: 0 }, colors: COLORS });
+      confetti({ particleCount: 4, angle: 120, spread: 50, origin: { x: 1 }, colors: COLORS });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+  }, 2800);
+}
+</script>
+</body>
+</html>

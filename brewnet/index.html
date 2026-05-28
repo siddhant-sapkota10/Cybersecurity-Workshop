@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrewNet Cafe — Staff Portal</title>
+
+  <!-- ████████████████████████████████████████████████████████████ -->
+  <!-- ⚠  BREWNET INTERNAL SYSTEM — AUTHORISED PERSONNEL ONLY     -->
+  <!-- ████████████████████████████████████████████████████████████ -->
+
+  <!--
+    ╔══════════════════════════════════════════════════════════════╗
+    ║         BREWNET CAFE — STAFF CREDENTIAL STORE               ║
+    ║                   CONFIDENTIAL  v3.2.1                      ║
+    ╠══════════════════════════════════════════════════════════════╣
+    ║                                                              ║
+    ║  BARISTA TIER                                                ║
+    ║    Username : staff.sophie                                   ║
+    ║    Password : coffee2024                                     ║
+    ║                                                              ║
+    ║  MANAGER TIER                                                ║
+    ║    Username : manager.brew                                   ║
+    ║    Password : BrewNet@99                                     ║
+    ║                                                              ║
+    ║  ADMINISTRATOR TIER  ★  RESTRICTED ACCESS                   ║
+    ║    Username : admin.brewnet                                  ║
+    ║    Password : C4feN3t!2025                                   ║
+    ║                                                              ║
+    ║  Last updated : 2025-01-15                                   ║
+    ║  IT Support   : it@brewnet.local  |  Internal Ext. 204      ║
+    ╚══════════════════════════════════════════════════════════════╝
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:        #F4EFE4;
+      --cream-dark:   #EAE0CC;
+      --cream-mid:    #E0D4BE;
+      --warm-white:   #FAF7F2;
+      --espresso:     #2C1A0E;
+      --espresso-mid: #3D2416;
+      --espresso-lt:  #5C3D28;
+      --latte:        #C49A6C;
+      --latte-dark:   #A07848;
+      --latte-light:  #E4C498;
+      --latte-pale:   #F0DEC0;
+      --warm-grey:    #9A8C7C;
+      --warm-grey-lt: #BEB0A0;
+      --error-red:    #C93535;
+      --error-bg:     #FFF0EE;
+      --green-ok:     #2E7D52;
+      --border:       rgba(44,26,14,0.12);
+      --border-md:    rgba(44,26,14,0.20);
+      --shadow-sm:    0 1px 3px rgba(44,26,14,0.08);
+      --shadow-md:    0 4px 16px rgba(44,26,14,0.10);
+      --shadow-lg:    0 16px 48px rgba(44,26,14,0.16);
+      --radius-sm:    6px;
+      --radius-md:    10px;
+      --radius-lg:    16px;
+      --serif:        'DM Serif Display', Georgia, serif;
+      --sans:         'DM Sans', system-ui, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--sans);
+      background: var(--cream);
+      color: var(--espresso);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--cream-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--latte); border-radius: 3px; }
+
+    /* ═══════════════ NAVIGATION ═══════════════ */
+    .topnav {
+      background: var(--espresso);
+      color: var(--latte-light);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--espresso-mid);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .brand-name {
+      font-family: var(--serif);
+      font-size: 20px;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-name span { color: var(--latte-light); }
+
+    .nav-sep {
+      width: 1px;
+      height: 20px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .nav-portal {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--warm-grey-lt);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Pulsing HTTP badge */
+    .http-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--error-red);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      padding: 4px 10px 4px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      animation: badgePulse 2.4s ease-in-out infinite;
+    }
+
+    .http-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fff;
+      animation: dotBlink 1.2s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(201,53,53,0.5); }
+      50%       { opacity: 0.9; box-shadow: 0 0 0 6px rgba(201,53,53,0); }
+    }
+
+    @keyframes dotBlink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .nav-datetime {
+      font-size: 12px;
+      color: var(--warm-grey-lt);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ═══════════════ PAGE LAYOUT ═══════════════ */
+    .page-body {
+      display: grid;
+      grid-template-columns: 260px 1fr 260px;
+      min-height: calc(100vh - 56px - 52px);
+      gap: 0;
+    }
+
+    /* ═══════════════ SIDEBAR LEFT ═══════════════ */
+    .sidebar {
+      background: var(--warm-white);
+      border-right: 1px solid var(--border);
+      padding: 20px 16px;
+      overflow-y: auto;
+    }
+
+    .sidebar-right-panel {
+      border-right: none;
+      border-left: 1px solid var(--border);
+    }
+
+    .sidebar-heading {
+      font-family: var(--serif);
+      font-size: 16px;
+      color: var(--espresso);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-md);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-date {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--warm-grey);
+      background: var(--cream-dark);
+      padding: 2px 7px;
+      border-radius: 3px;
+      letter-spacing: 0.4px;
+    }
+
+    /* Staff cards */
+    .staff-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      transition: box-shadow 0.15s;
+    }
+
+    .staff-card:hover { box-shadow: var(--shadow-sm); }
+
+    .staff-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      flex-shrink: 0;
+      color: #fff;
+    }
+
+    .av-coffee  { background: #6B3F1F; }
+    .av-latte   { background: #9A6240; }
+    .av-mocha   { background: #5C3028; }
+    .av-caramel { background: #B07830; }
+    .av-espresso{ background: #2C1A0E; }
+    .av-vanilla { background: #8C6848; }
+    .av-hazel   { background: #7A4F2A; }
+    .av-chai    { background: #4A3020; }
+
+    .staff-info { flex: 1; min-width: 0; }
+
+    .staff-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--espresso);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .staff-role-label {
+      font-size: 11px;
+      color: var(--warm-grey);
+    }
+
+    .staff-shift {
+      font-size: 11px;
+      color: var(--latte-dark);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .staff-status {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-on  { background: #2E9952; }
+    .status-off { background: var(--warm-grey-lt); }
+
+    /* ═══════════════ MAIN LOGIN PANEL ═══════════════ */
+    .main-panel {
+      padding: 36px 40px;
+      max-width: 520px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .portal-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .portal-logo {
+      font-size: 40px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .portal-title {
+      font-family: var(--serif);
+      font-size: 28px;
+      color: var(--espresso);
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
+
+    .portal-subtitle {
+      font-size: 13px;
+      color: var(--warm-grey);
+      font-weight: 400;
+    }
+
+    /* Role selector */
+    .role-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .role-btn {
+      background: var(--cream-dark);
+      border: 1.5px solid var(--border-md);
+      border-radius: var(--radius-sm);
+      padding: 10px 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.18s;
+      font-family: var(--sans);
+      color: var(--espresso-lt);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .role-btn:hover {
+      border-color: var(--latte);
+      background: var(--latte-pale);
+      color: var(--espresso);
+    }
+
+    .role-btn.active {
+      background: var(--espresso);
+      border-color: var(--espresso);
+      color: var(--latte-light);
+    }
+
+    .role-btn-icon { display: block; font-size: 18px; margin-bottom: 4px; }
+    .role-btn-label { font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+    .role-btn-access {
+      font-size: 10px;
+      opacity: 0.65;
+      margin-top: 1px;
+    }
+
+    /* Login form card */
+    .login-card {
+      background: var(--warm-white);
+      border: 1px solid var(--border-md);
+      border-radius: var(--radius-lg);
+      padding: 28px 28px 24px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: var(--espresso-lt);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border-md);
+      border-radius: var(--radius-sm);
+      background: var(--cream);
+      color: var(--espresso);
+      font-family: var(--sans);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--latte);
+      box-shadow: 0 0 0 3px rgba(196,154,108,0.18);
+      background: #fff;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder {
+      color: var(--warm-grey-lt);
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: var(--warm-grey);
+      margin-top: 5px;
+    }
+
+    .btn-signin {
+      width: 100%;
+      padding: 12px;
+      background: var(--espresso);
+      color: var(--latte-light);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: background 0.18s, transform 0.1s;
+      margin-top: 8px;
+    }
+
+    .btn-signin:hover { background: var(--espresso-mid); }
+    .btn-signin:active { transform: scale(0.99); }
+
+    .form-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 20px 0;
+    }
+
+    .security-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--warm-grey);
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      margin-top: 14px;
+    }
+
+    .security-note-icon { font-size: 14px; }
+
+    /* Forgot link */
+    .form-footer-links {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--warm-grey);
+      margin-top: 12px;
+    }
+
+    .form-footer-links a {
+      color: var(--latte-dark);
+      text-decoration: none;
+    }
+
+    .form-footer-links a:hover { text-decoration: underline; }
+
+    /* ═══════════════ RIGHT SIDEBAR ═══════════════ */
+    .notice-card {
+      background: var(--cream);
+      border: 1px solid var(--border-md);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .notice-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--espresso-lt);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .notice-card-title .notice-icon { font-size: 13px; }
+
+    .notice-warn {
+      border-left: 3px solid #E57C2C;
+    }
+
+    .notice-info {
+      border-left: 3px solid var(--latte);
+    }
+
+    .notice-item {
+      font-size: 12px;
+      color: var(--espresso-lt);
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.4;
+    }
+
+    .notice-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .notice-item:first-of-type { padding-top: 0; }
+
+    .notice-date {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--warm-grey);
+      display: block;
+      margin-top: 3px;
+    }
+
+    .quick-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 0;
+      font-size: 12px;
+      color: var(--latte-dark);
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.12s;
+    }
+
+    .quick-link:last-child { border-bottom: none; }
+    .quick-link:hover { color: var(--espresso); }
+
+    /* ═══════════════ FOOTER ═══════════════ */
+    .site-footer {
+      background: var(--espresso);
+      color: rgba(255,255,255,0.4);
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-sep { opacity: 0.3; }
+    .footer-brand { color: var(--latte-light); font-weight: 600; }
+
+    /* ═══════════════ MODAL ═══════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(28,16,8,0.72);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-card {
+      background: var(--warm-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 520px;
+      overflow: hidden;
+      animation: slideUp 0.25s cubic-bezier(0.34,1.2,0.64,1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(24px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal-header {
+      background: var(--espresso);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .modal-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(196,154,108,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .modal-header-text h2 {
+      font-family: var(--serif);
+      font-size: 20px;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .modal-header-text p {
+      font-size: 12px;
+      color: var(--latte-light);
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    .modal-body { padding: 24px; }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .modal-info-cell {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+    }
+
+    .modal-info-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--warm-grey);
+      margin-bottom: 3px;
+    }
+
+    .modal-info-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--espresso);
+    }
+
+    .tasks-heading {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--warm-grey);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tasks-heading::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-md);
+    }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12.5px;
+      color: var(--espresso-lt);
+      line-height: 1.4;
+    }
+
+    .task-item:last-child { border-bottom: none; }
+
+    .task-check {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid var(--border-md);
+      border-radius: 3px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .task-urgent { color: var(--error-red); font-weight: 600; }
+
+    .task-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
+    .badge-urgent { background: #FFE8E8; color: var(--error-red); }
+    .badge-new    { background: #E8F5EC; color: var(--green-ok); }
+
+    .activity-log {
+      background: var(--cream-dark);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-top: 14px;
+    }
+
+    .activity-log-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--warm-grey);
+      margin-bottom: 7px;
+    }
+
+    .activity-entry {
+      font-size: 11.5px;
+      color: var(--espresso-lt);
+      padding: 3px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .activity-time {
+      font-size: 10.5px;
+      color: var(--warm-grey);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      background: var(--cream-dark);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-dashboard {
+      flex: 1;
+      padding: 10px;
+      background: var(--espresso);
+      color: var(--latte-light);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-dashboard:hover { background: var(--espresso-mid); }
+
+    .btn-signout {
+      padding: 10px 18px;
+      background: transparent;
+      color: var(--warm-grey);
+      border: 1.5px solid var(--border-md);
+      border-radius: var(--radius-sm);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-signout:hover {
+      border-color: var(--espresso-lt);
+      color: var(--espresso);
+    }
+
+    /* ═══════════════ RESPONSIVE ═══════════════ */
+    @media (max-width: 900px) {
+      .page-body { grid-template-columns: 1fr; }
+      .sidebar, .sidebar-right-panel {
+        border: none;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main-panel { padding: 24px 20px; }
+      .modal-grid { grid-template-columns: 1fr; }
+      .nav-portal { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  NAVIGATION                                                    -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <span class="brand-icon">☕</span>
+    <span class="brand-name">BrewNet <span>Cafe</span></span>
+    <div class="nav-sep"></div>
+    <span class="nav-portal">Staff Portal</span>
+  </div>
+  <div class="nav-right">
+    <div class="http-badge">
+      <span class="http-badge-dot"></span>
+      HTTP — NOT SECURE
+    </div>
+    <span class="nav-datetime" id="navClock">--:-- --</span>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  THREE-COLUMN LAYOUT                                          -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="page-body">
+
+  <!-- ── LEFT SIDEBAR: TODAY'S ROSTER ── -->
+  <aside class="sidebar">
+    <div class="sidebar-heading">
+      Today's Roster
+      <span class="sidebar-date" id="rosterDate">MON 26 MAY</span>
+    </div>
+
+    <div class="staff-card">
+      <div class="staff-avatar av-latte">SM</div>
+      <div class="staff-info">
+        <div class="staff-name">Sophie Martinez</div>
+        <div class="staff-role-label">Head Barista</div>
+      </div>
+      <div style="text-align:right">
+        <div class="staff-shift">07:00–15:00</div>
+        <div class="staff-status status-on" style="margin:4px auto 0"></div>
+      </div>
+    </div>
+
+    <div class="staff-card">
+      <div class="staff-avatar av-coffee">JK</div>
+      <div class="staff-info">
+        <div class="staff-name">James Kim</div>
+        <div class="staff-role-label">Shift Manager</div>
+      </div>
+      <div style="text-align:right">
+        <div class="staff-shift">09:00–17:00</div>
+        <div class="staff-status status-on" style="margin:4px auto 0"></div>
+      </div>
+    </div>
+
+    <div class="staff-card">
+      <div class="staff-avatar av-mocha">AR</div>
+      <div class="staff-info">
+        <div class="staff-name">Aisha Rahman</div>
+        <div class="staff-role-label">Barista</div>
+      </div>
+      <div style="text-align:right">
+        <div class="staff-shift">07:00–15:00</div>
+        <div class="staff-status status-on" style="margin:4px auto 0"></div>
+      </div>
+    </div>
+
+    <div class="staff-card">
+      <div class="staff-avatar av-caramel">CW</div>
+      <div class="staff-info">
+        <div class="staff-name">Connor Walsh</div>
+        <div class="staff-role-label">Barista</div>
+      </div>
+      <div style="text-align:right">
+        <div class="staff-shift">11:00–19:00</div>
+        <div class="staff-status status-off" style="margin:4px auto 0"></div>
+      </div>
+    </div>
+
+    <div class="staff-card">
+      <div class="staff-avatar av-espresso">PP</div>
+      <div class="staff-info">
+        <div class="staff-name">Priya Patel</div>
+        <div class="staff-role-label">Barista</div>
+      </div>
+      <div style="text-align:right">
+        <div class="staff-shift">07:00–15:00</div>
+        <div class="staff-status status-on" style="margin:4px auto 0"></div>
+      </div>
+    </div>
+
+    <div class="staff-card">
+      <div class="staff-avatar av-vanilla">TN</div>
+      <div class="staff-info">
+        <div class="staff-name">Tom Nguyen</div>
+        <div class="staff-role-label">Kitchen Lead</div>
+      </div>
+      <div style="text-align:right">
+        <div class="staff-shift">10:00–18:00</div>
+        <div class="staff-status status-on" style="margin:4px auto 0"></div>
+      </div>
+    </div>
+
+    <div class="staff-card">
+      <div class="staff-avatar av-hazel">MS</div>
+      <div class="staff-info">
+        <div class="staff-name">Maria Santos</div>
+        <div class="staff-role-label">Floor Manager</div>
+      </div>
+      <div style="text-align:right">
+        <div class="staff-shift">13:00–21:00</div>
+        <div class="staff-status status-off" style="margin:4px auto 0"></div>
+      </div>
+    </div>
+
+    <div class="staff-card">
+      <div class="staff-avatar av-chai">DC</div>
+      <div class="staff-info">
+        <div class="staff-name">David Chen</div>
+        <div class="staff-role-label">IT / Admin</div>
+      </div>
+      <div style="text-align:right">
+        <div class="staff-shift">08:00–16:00</div>
+        <div class="staff-status status-on" style="margin:4px auto 0"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);">
+      <div style="font-size:11px; color:var(--warm-grey);">
+        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#2E9952; margin-right:5px;"></span>5 currently on-shift
+      </div>
+      <div style="font-size:11px; color:var(--warm-grey); margin-top:4px;">
+        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--warm-grey-lt); margin-right:5px;"></span>3 starting later
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── CENTRE: LOGIN FORM ── -->
+  <main style="display:flex; align-items:flex-start; justify-content:center; padding:40px 20px;">
+    <div class="main-panel" style="padding:0; max-width:440px; width:100%;">
+
+      <div class="portal-header">
+        <span class="portal-logo">☕</span>
+        <h1 class="portal-title">Staff Sign In</h1>
+        <p class="portal-subtitle">BrewNet Cafe Internal Portal · v3.2.1</p>
+      </div>
+
+      <!-- Role selector -->
+      <div class="role-selector" role="group" aria-label="Select your access role">
+        <button class="role-btn active" data-role="barista" data-user="staff.sophie" data-pass="coffee2024" type="button" onclick="selectRole(this)">
+          <span class="role-btn-icon">☕</span>
+          <span class="role-btn-label">Barista</span>
+          <span class="role-btn-access">Standard Access</span>
+        </button>
+        <button class="role-btn" data-role="manager" data-user="manager.brew" data-pass="BrewNet@99" type="button" onclick="selectRole(this)">
+          <span class="role-btn-icon">📋</span>
+          <span class="role-btn-label">Manager</span>
+          <span class="role-btn-access">Elevated Access</span>
+        </button>
+        <button class="role-btn" data-role="admin" data-user="admin.brewnet" data-pass="C4feN3t!2025" type="button" onclick="selectRole(this)">
+          <span class="role-btn-icon">⚙️</span>
+          <span class="role-btn-label">Admin</span>
+          <span class="role-btn-access">Full Access</span>
+        </button>
+      </div>
+
+      <!-- Login card -->
+      <div class="login-card">
+        <form id="loginForm" method="POST" action="/login" autocomplete="off">
+          <input type="hidden" name="role" id="roleInput" value="barista">
+
+          <div class="form-group">
+            <label for="usernameInput">Username</label>
+            <input
+              type="text"
+              name="username"
+              id="usernameInput"
+              placeholder="e.g. staff.sophie"
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <div class="form-hint">Use your assigned BrewNet staff username</div>
+          </div>
+
+          <div class="form-group">
+            <label for="passwordInput">Password</label>
+            <input
+              type="password"
+              name="password"
+              id="passwordInput"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+            >
+          </div>
+
+          <button type="submit" class="btn-signin" id="signinBtn">
+            Sign In to BrewNet Portal
+          </button>
+        </form>
+
+        <hr class="form-divider">
+
+        <div class="security-note">
+          <span class="security-note-icon">🔒</span>
+          <span>This portal is protected by BrewNet Security Suite™ 3.2 — authorised access only.</span>
+        </div>
+
+        <div class="form-footer-links">
+          <a href="#">Forgot your password?</a>
+          <a href="#">IT Support · Ext. 204</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── RIGHT SIDEBAR: NOTICES ── -->
+  <aside class="sidebar sidebar-right-panel">
+
+    <div class="notice-card notice-warn">
+      <div class="notice-card-title">
+        <span class="notice-icon">⚠️</span>
+        System Maintenance
+      </div>
+      <div class="notice-item">
+        Scheduled downtime: <strong>Sat 31 May, 2:00–4:00 AM</strong>.
+        POS terminals and the staff portal will be offline.
+        <span class="notice-date">Posted by IT — 23 May 2025</span>
+      </div>
+      <div class="notice-item">
+        Please complete all end-of-shift reports before midnight Friday. Contact David Chen (Ext. 204) for urgent queries.
+        <span class="notice-date">Reminder — 24 May 2025</span>
+      </div>
+    </div>
+
+    <div class="notice-card notice-info">
+      <div class="notice-card-title">
+        <span class="notice-icon">📢</span>
+        Announcements
+      </div>
+      <div class="notice-item">
+        New winter menu rollout begins <strong>Monday 2 June</strong>. Barista training session: Friday 30 May, 3:00 PM in the back training room.
+        <span class="notice-date">From: James Kim · 21 May 2025</span>
+      </div>
+      <div class="notice-item">
+        Staff parking: please use the <strong>rear car park</strong> until construction on Wilson St ends (est. 6 June).
+        <span class="notice-date">Operations · 19 May 2025</span>
+      </div>
+      <div class="notice-item">
+        Mandatory health &amp; safety refresher required for all staff before <strong>1 June 2025</strong>. See the notice board in the break room.
+        <span class="notice-date">HR Dept · 15 May 2025</span>
+      </div>
+    </div>
+
+    <div class="notice-card">
+      <div class="notice-card-title">
+        <span class="notice-icon">🔗</span>
+        Quick Links
+      </div>
+      <a class="quick-link" href="#">📅 View Full Roster</a>
+      <a class="quick-link" href="#">📦 Inventory System</a>
+      <a class="quick-link" href="#">💰 POS Dashboard</a>
+      <a class="quick-link" href="#">📊 Daily Sales Report</a>
+      <a class="quick-link" href="#">🛠️ IT Helpdesk — Ext. 204</a>
+    </div>
+
+    <div class="notice-card" style="background:var(--latte-pale); border-color:var(--latte-light);">
+      <div class="notice-card-title" style="color:var(--espresso-lt);">
+        <span class="notice-icon">☕</span>
+        Brew of the Day
+      </div>
+      <div style="font-family:var(--serif); font-size:18px; color:var(--espresso); margin-bottom:4px;">
+        Honey Oat Latte
+      </div>
+      <div style="font-size:12px; color:var(--warm-grey);">
+        Single origin Ethiopian · 36g · Oat milk · 18g honey syrup
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  FOOTER                                                        -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <span class="footer-brand">brewnet.local</span>
+  <span class="footer-sep">·</span>
+  <span>Internal Staff Portal</span>
+  <span class="footer-sep">·</span>
+  <span>© 2025 BrewNet Cafe Pty Ltd</span>
+  <span class="footer-sep">·</span>
+  <span>v3.2.1</span>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  LOGIN SUCCESS MODAL                                           -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div id="loginModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Admin Dashboard">
+  <div class="modal-card">
+
+    <div class="modal-header">
+      <div class="modal-badge">✅</div>
+      <div class="modal-header-text">
+        <h2>Access Granted</h2>
+        <p id="modalWelcome">Welcome back, Administrator</p>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-info-cell">
+          <div class="modal-info-label">📍 Location</div>
+          <div class="modal-info-value">CBD — Collins St</div>
+        </div>
+        <div class="modal-info-cell">
+          <div class="modal-info-label">👤 Role</div>
+          <div class="modal-info-value" id="modalRole">Administrator</div>
+        </div>
+        <div class="modal-info-cell">
+          <div class="modal-info-label">⏰ Current Shift</div>
+          <div class="modal-info-value" id="modalShift">08:00 – 16:00</div>
+        </div>
+        <div class="modal-info-cell">
+          <div class="modal-info-label">🕐 Last Login</div>
+          <div class="modal-info-value" id="modalLastLogin">Today, 08:47</div>
+        </div>
+      </div>
+
+      <div class="tasks-heading">Pending Tasks</div>
+
+      <div id="taskList">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="activity-log">
+        <div class="activity-log-title">Recent Activity</div>
+        <div class="activity-entry">
+          <span class="activity-time">09:02</span>
+          <span>Staff schedule exported (PDF) — James Kim</span>
+        </div>
+        <div class="activity-entry">
+          <span class="activity-time">08:55</span>
+          <span>POS Terminal #2 rebooted — Location Collins St</span>
+        </div>
+        <div class="activity-entry">
+          <span class="activity-time">08:31</span>
+          <span>Inventory sync completed — 3 low-stock alerts</span>
+        </div>
+        <div class="activity-entry">
+          <span class="activity-time">07:48</span>
+          <span>Daily opening checklist submitted — Sophie M.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-dashboard" onclick="closeDashboard()">Open Full Dashboard</button>
+      <button class="btn-signout" onclick="closeModal()">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  JAVASCRIPT                                                    -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<script>
+  'use strict';
+
+  // ── Role configuration ──────────────────────────────────────────
+  const ROLES = {
+    barista: {
+      label:    'Barista',
+      shift:    '07:00 – 15:00',
+      tasks: [
+        { text: 'Complete morning opening checklist', urgent: false },
+        { text: 'Restock milk fridges — running low on oat milk', urgent: true },
+        { text: 'Clean and backflush group heads (due 11:00)', urgent: false },
+        { text: 'Check expiry dates on pastry display', urgent: false },
+      ],
+    },
+    manager: {
+      label:    'Shift Manager',
+      shift:    '09:00 – 17:00',
+      tasks: [
+        { text: 'Approve 3 pending shift-swap requests', urgent: false },
+        { text: 'Submit weekly wage report to payroll — OVERDUE', urgent: true, badge: 'URGENT' },
+        { text: 'Review low-stock inventory alerts (3 items)', urgent: false },
+        { text: 'Confirm Friday barista training room booking', urgent: false },
+        { text: 'Update new menu board prices in POS system', urgent: false, badge: 'NEW' },
+      ],
+    },
+    admin: {
+      label:    'Administrator',
+      shift:    '08:00 – 16:00',
+      tasks: [
+        { text: 'End-of-month POS reconciliation — due Thursday', urgent: false },
+        { text: 'Rotate all staff portal credentials — security audit', urgent: true, badge: 'URGENT' },
+        { text: 'Approve weekend roster changes (3 pending submissions)', urgent: false },
+        { text: 'Review Q1 inventory variance report', urgent: false },
+        { text: 'Update IT contractor access before maintenance window', urgent: true, badge: 'URGENT' },
+      ],
+    },
+  };
+
+  // ── Clock ───────────────────────────────────────────────────────
+  function tickClock() {
+    const el = document.getElementById('navClock');
+    if (!el) return;
+    const now = new Date();
+    el.textContent = now.toLocaleTimeString('en-AU', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+    });
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // Roster date
+  (function setRosterDate() {
+    const el = document.getElementById('rosterDate');
+    if (!el) return;
+    const d = new Date();
+    el.textContent = d.toLocaleDateString('en-AU', {
+      weekday: 'short', day: 'numeric', month: 'short',
+    }).toUpperCase();
+  })();
+
+  // ── Role button selection ───────────────────────────────────────
+  function selectRole(btn) {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const role = btn.dataset.role;
+    const user = btn.dataset.user;
+    const pass = btn.dataset.pass;
+
+    document.getElementById('roleInput').value    = role;
+    document.getElementById('usernameInput').value = user;
+    document.getElementById('passwordInput').value = pass;
+  }
+
+  // Pre-fill barista on load
+  document.addEventListener('DOMContentLoaded', function() {
+    const baristaBtnEl = document.querySelector('.role-btn[data-role="barista"]');
+    if (baristaBtnEl) selectRole(baristaBtnEl);
+  });
+
+  // ── Detect post-login redirect ──────────────────────────────────
+  window.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('logged_in') === 'true') {
+      const user = params.get('user') || 'admin.brewnet';
+      const role = params.get('role') || 'admin';
+      showLoginModal(user, role);
+      // Clean URL bar without reload
+      history.replaceState({}, '', '/');
+    }
+  });
+
+  // ── Show modal ──────────────────────────────────────────────────
+  function showLoginModal(user, role) {
+    const cfg = ROLES[role] || ROLES.admin;
+
+    document.getElementById('modalWelcome').textContent = `Welcome back, ${user}`;
+    document.getElementById('modalRole').textContent    = cfg.label;
+    document.getElementById('modalShift').textContent   = cfg.shift;
+
+    const now = new Date();
+    document.getElementById('modalLastLogin').textContent =
+      'Today, ' + now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    // Build task list
+    const taskList = document.getElementById('taskList');
+    taskList.innerHTML = '';
+    cfg.tasks.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'task-item';
+
+      let badgeHtml = '';
+      if (t.badge === 'URGENT') badgeHtml = '<span class="task-badge badge-urgent">URGENT</span>';
+      if (t.badge === 'NEW')    badgeHtml = '<span class="task-badge badge-new">NEW</span>';
+
+      div.innerHTML = `
+        <span class="task-check"></span>
+        <span class="${t.urgent ? 'task-urgent' : ''}">${t.text}${badgeHtml}</span>
+      `;
+      taskList.appendChild(div);
+    });
+
+    document.getElementById('loginModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('loginModal').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function closeDashboard() {
+    // In a real portal this would navigate; here we keep the modal for demo
+    alert('Full dashboard access requires a dedicated admin workstation.\n\nThis portal demo ends here. ☕');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('loginModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+</script>
+
+</body>
+</html>
