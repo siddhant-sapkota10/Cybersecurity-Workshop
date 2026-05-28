@@ -29,7 +29,7 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
-from flask import Flask, render_template, request, redirect, url_for, make_response
+from flask import Flask, render_template, request, redirect, url_for, make_response, jsonify
 from flask_socketio import SocketIO, emit, join_room
 
 # ── Silence noisy loggers ─────────────────────────────────────────
@@ -194,6 +194,55 @@ def sb_join():
 @secbank_app.route('/game')
 def sb_game():
     return render_template('securebank_game.html', port=SECBANK_PORT)
+
+
+@secbank_app.route('/bank/login', methods=['POST'])
+def sb_bank_login():
+    """Real HTTP POST login — credentials visible in Wireshark as form data."""
+    username   = request.form.get('username',   '').strip()
+    password   = request.form.get('password',   '').strip()
+    student_id = request.form.get('student_id', '').strip()
+
+    R = '\033[91m'; Y = '\033[93m'; B = '\033[1m'; X = '\033[0m'; D = '\033[2m'
+    c          = game['correct']
+    is_correct = (username == c['username'] and password == c['password'])
+    mark       = '✓ CORRECT' if is_correct else '✗ WRONG'
+    print(f"\n{R}{'━'*58}{X}")
+    print(f"{R}{B}  ⚠   SECUREBANK — HTTP CREDENTIALS CAPTURED   ⚠{X}")
+    print(f"{R}{'━'*58}{X}")
+    print(f"  Source IP : {request.remote_addr}")
+    print(f"  Endpoint  : POST /bank/login  (HTTP — unencrypted)")
+    print(f"  Username  : {Y}{username}{X}")
+    print(f"  Password  : {Y}{password}{X}")
+    print(f"  Result    : {mark}")
+    print(f"  Raw body  : {D}{request.get_data(as_text=True)[:200]}{X}")
+    print(f"{R}{'━'*58}{X}\n")
+
+    if game['status'] != 'running':
+        return jsonify({'correct': False, 'message': 'The challenge is not currently active.'})
+
+    elapsed_secs = int(time.time() - game['timer_start']) if game['timer_start'] else 0
+    elapsed_s    = _elapsed_str(elapsed_secs)
+
+    if student_id and student_id in game['students']:
+        with _lock:
+            s              = game['students'][student_id]
+            s['attempts']  = s.get('attempts', 0) + 1
+            s['elapsed_str']  = elapsed_s
+            s['elapsed_secs'] = elapsed_secs
+            s['submission_time'] = datetime.now().strftime('%H:%M:%S')
+            if not is_correct:
+                s['status'] = 'wrong'
+        lb = _leaderboard_payload()
+        if game['teacher_sid']:
+            socketio.emit('leaderboard_update', {'entries': lb},          to=game['teacher_sid'])
+            socketio.emit('lobby_update',        {'students': _lobby_payload()}, to=game['teacher_sid'])
+
+    return jsonify({
+        'correct': is_correct,
+        'message': 'Access granted.' if is_correct else 'Incorrect credentials.',
+        'time':    elapsed_s,
+    })
 
 
 @secbank_app.route('/teacher')

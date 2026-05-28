@@ -566,38 +566,44 @@ function togglePw() {
   btn.textContent = pwVisible ? '🙈' : '👁️';
 }
 
-// ── Login ─────────────────────────────────────────────────
+// ── Login — real HTTP POST so Wireshark can capture credentials ───
 document.getElementById('loginUser').addEventListener('keydown', e => { if(e.key==='Enter') submitLogin(); });
 document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') submitLogin(); });
 
-function submitLogin() {
+async function submitLogin() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value.trim();
   if (!u || !p) return;
+
   const btn = document.getElementById('btnLogin');
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = 'Verifying…';
   document.getElementById('loginError').style.display = 'none';
-  socket.emit('submit_answer', { endpoint: '/bank/login', username: u, password: p });
-}
 
-socket.on('submission_result', data => {
-  if (data.correct) {
-    document.getElementById('dbNavMeta').textContent = 'Logged in as: ' + (student.name || 'Analyst');
-    document.getElementById('stateLogin').style.display     = 'none';
-    document.getElementById('stateDashboard').style.display = 'block';
-  } else {
-    const btn = document.getElementById('btnLogin');
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
-    document.getElementById('loginError').style.display = 'block';
-    document.getElementById('loginPass').value = '';
-    if (pwVisible) {
-      // keep visible so they can see they need to try again
+  try {
+    const resp = await fetch('/bank/login', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    `username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&student_id=${encodeURIComponent(student.student_id || '')}`,
+    });
+    const data = await resp.json();
+
+    if (data.correct) {
+      document.getElementById('dbNavMeta').textContent = 'Logged in as: ' + (student.name || 'Analyst');
+      document.getElementById('stateLogin').style.display     = 'none';
+      document.getElementById('stateDashboard').style.display = 'block';
+    } else {
+      btn.disabled    = false;
+      btn.textContent = 'Sign In';
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
     }
-    document.getElementById('loginPass').focus();
+  } catch (_) {
+    btn.disabled    = false;
+    btn.textContent = 'Sign In';
   }
-});
+}
 
 // ── Recovery ──────────────────────────────────────────────
 function showRecovery() {
