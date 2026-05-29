@@ -409,10 +409,6 @@ table.tx-table{width:100%;border-collapse:collapse;}
             <label>Amount</label>
             <input type="text" readonly value="$47,250.00">
           </div>
-          <div class="rf">
-            <label>Authorisation Code</label>
-            <input type="text" id="authCode" placeholder="Enter any code to authorise" autocomplete="off">
-          </div>
           <button class="btn-recover" id="btnRecover" onclick="submitRecovery()">
             ✓ Confirm Transfer — Return $47,250.00 to St Edmunds College
           </button>
@@ -613,9 +609,6 @@ function showRecovery() {
 }
 
 function submitRecovery() {
-  const code = document.getElementById('authCode').value.trim();
-  if (!code) { document.getElementById('authCode').focus(); return; }
-
   const btn = document.getElementById('btnRecover');
   btn.disabled = true;
   btn.textContent = 'Processing…';
