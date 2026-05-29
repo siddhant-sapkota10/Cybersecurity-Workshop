@@ -245,6 +245,7 @@ def sb_bank_login():
     })
 
 
+
 @secbank_app.route('/teacher')
 def sb_teacher():
     return render_template(

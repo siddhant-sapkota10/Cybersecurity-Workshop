@@ -112,7 +112,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:12px;}
 </style>
 </head>
-<body>
+<body data-port="{{ port }}">
 
 <!-- TOP BAR -->
 <div class="topbar">
@@ -188,7 +188,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-const PORT   = {{ port }};
+const PORT = parseInt(document.body.dataset.port) || 8081;
 const socket = io('http://' + window.location.hostname + ':' + PORT);
 
 // ── Connection ────────────────────────────────────
@@ -213,10 +213,19 @@ socket.on('full_state', data => {
 });
 
 // ── Credentials ───────────────────────────────────
-function saveCreds() {
+async function saveCreds() {
   const u = document.getElementById('cfgUsername').value.trim();
   const p = document.getElementById('cfgPassword').value.trim();
   if (!u || !p) { showMsg('saveMsg','err','Both fields required.'); return; }
+  // POST to /bank/login — generates a realistic HTTP packet in Wireshark
+  try {
+    await fetch('/bank/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`,
+    });
+  } catch (_) {}
+  // Save credentials to game state via WebSocket
   socket.emit('teacher_save_creds', { username: u, password: p, endpoint: '/bank/login' });
 }
 socket.on('creds_saved', () => showMsg('saveMsg','ok','✓ Saved'));
