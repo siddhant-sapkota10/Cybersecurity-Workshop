@@ -243,6 +243,66 @@ table.tx-table{width:100%;border-collapse:collapse;}
   0%,100%{box-shadow:0 0 0 0 rgba(63,185,80,.6)}
   60%{box-shadow:0 0 0 10px rgba(63,185,80,0)}
 }
+
+/* ══ HELP BUTTON & MODAL ══ */
+#helpBtn{
+  position:fixed;bottom:24px;right:24px;z-index:1000;
+  padding:0 18px;height:44px;border-radius:22px;
+  background:var(--accent);color:#000;border:none;
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  letter-spacing:.06em;cursor:pointer;
+  box-shadow:0 4px 20px rgba(88,166,255,.45);
+  display:flex;align-items:center;gap:7px;white-space:nowrap;
+  transition:transform .15s,box-shadow .15s;
+}
+#helpBtn:hover{transform:scale(1.05);box-shadow:0 6px 28px rgba(88,166,255,.6);}
+
+#helpModal{
+  display:none;position:fixed;inset:0;z-index:2000;
+  background:rgba(2,5,10,.78);
+  align-items:center;justify-content:center;padding:24px;
+}
+#helpModal.open{display:flex;}
+
+.hm-box{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:12px;width:100%;max-width:480px;
+  box-shadow:0 24px 64px rgba(0,0,0,.75);overflow:hidden;
+}
+.hm-header{
+  background:#0D2137;border-bottom:1px solid rgba(88,166,255,.15);
+  padding:18px 22px;display:flex;align-items:center;justify-content:space-between;
+}
+.hm-title{font-family:var(--mono);font-size:13px;font-weight:600;
+  color:var(--text);letter-spacing:.08em;}
+.hm-close{background:none;border:none;color:var(--muted);font-size:20px;
+  cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;
+  transition:color .15s,background .15s;}
+.hm-close:hover{color:var(--text);background:rgba(255,255,255,.08);}
+
+.hm-body{padding:20px 22px;}
+
+.hm-step{
+  display:flex;gap:14px;padding:14px 16px;border-radius:8px;
+  margin-bottom:10px;border:1px solid transparent;
+  opacity:.4;transition:opacity .25s,background .25s,border-color .25s;
+}
+.hm-step:last-child{margin-bottom:0;}
+.hm-step.active{background:rgba(88,166,255,.07);border-color:rgba(88,166,255,.25);opacity:1;}
+.hm-step.done{opacity:.65;}
+
+.hm-step-num{
+  flex-shrink:0;width:26px;height:26px;border-radius:50%;
+  background:var(--border2);font-family:var(--mono);font-size:11px;font-weight:600;
+  color:var(--muted);display:flex;align-items:center;justify-content:center;
+}
+.hm-step.active .hm-step-num{background:var(--accent);color:#000;}
+.hm-step.done .hm-step-num{background:var(--green);color:#000;}
+
+.hm-step-title{font-family:var(--mono);font-size:12px;font-weight:600;
+  color:var(--text);margin-bottom:5px;}
+.hm-step-desc{font-size:12px;color:var(--muted);line-height:1.65;}
+.hm-step.active .hm-step-desc{color:#C9D1D9;}
 </style>
 </head>
 <body>
@@ -466,6 +526,42 @@ table.tx-table{width:100%;border-collapse:collapse;}
 </div>
 
 
+<!-- ══ HELP BUTTON ══ -->
+<button id="helpBtn" onclick="openHelp()">💡 Need Help?</button>
+
+<!-- ══ HELP MODAL ══ -->
+<div id="helpModal" onclick="closeHelpOutside(event)">
+  <div class="hm-box">
+    <div class="hm-header">
+      <div class="hm-title">MISSION INSTRUCTIONS</div>
+      <button class="hm-close" onclick="closeHelp()">✕</button>
+    </div>
+    <div class="hm-body">
+      <div class="hm-step" id="hm-step-1">
+        <div class="hm-step-num">1</div>
+        <div>
+          <div class="hm-step-title">Capture the Credentials</div>
+          <div class="hm-step-desc">Open Wireshark and start capturing on your network interface. Look for an HTTP POST request — the username and password will be visible in plain text. Use those credentials to sign in on this page.</div>
+        </div>
+      </div>
+      <div class="hm-step" id="hm-step-2">
+        <div class="hm-step-num">2</div>
+        <div>
+          <div class="hm-step-title">Find the Stolen Transaction</div>
+          <div class="hm-step-desc">You're inside the hacker's bank account. Scroll through the transaction history and find the funds stolen from St Edmunds College Canberra. Click <strong style="color:#C9D1D9">Return Funds →</strong> on that row.</div>
+        </div>
+      </div>
+      <div class="hm-step" id="hm-step-3">
+        <div class="hm-step-num">3</div>
+        <div>
+          <div class="hm-step-title">Complete the Recovery Transfer</div>
+          <div class="hm-step-desc">Review the transfer details and click <strong style="color:#C9D1D9">Confirm Transfer</strong> to return $47,250.00 to St Edmunds College Canberra and complete the mission.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -588,6 +684,7 @@ async function submitLogin() {
       document.getElementById('dbNavMeta').textContent = 'Logged in as: ' + (student.name || 'Analyst');
       document.getElementById('stateLogin').style.display     = 'none';
       document.getElementById('stateDashboard').style.display = 'block';
+      setStep(2);
     } else {
       btn.disabled    = false;
       btn.textContent = 'Sign In';
@@ -601,11 +698,32 @@ async function submitLogin() {
   }
 }
 
+// ── Help modal ────────────────────────────────────────────
+let currentStep = 1;
+
+function setStep(n) {
+  currentStep = n;
+  [1,2,3].forEach(i => {
+    const el = document.getElementById('hm-step-' + i);
+    el.classList.remove('active','done');
+    if (i < n)        el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  });
+}
+
+function openHelp()  { document.getElementById('helpModal').classList.add('open'); }
+function closeHelp() { document.getElementById('helpModal').classList.remove('open'); }
+function closeHelpOutside(e) { if (e.target === document.getElementById('helpModal')) closeHelp(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
+
+setStep(1);
+
 // ── Recovery ──────────────────────────────────────────────
 function showRecovery() {
   const panel = document.getElementById('recoveryPanel');
   panel.style.display = 'block';
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setStep(3);
 }
 
 function submitRecovery() {
