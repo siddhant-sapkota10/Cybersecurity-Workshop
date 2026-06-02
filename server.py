@@ -206,7 +206,8 @@ def sb_bank_login():
     R = '\033[91m'; Y = '\033[93m'; B = '\033[1m'; X = '\033[0m'; D = '\033[2m'
     c          = game['correct']
     is_correct = (username == c['username'] and password == c['password'])
-    mark       = '✓ CORRECT' if is_correct else '✗ WRONG'
+    is_teacher = not student_id or student_id not in game['students']
+    mark       = '\033[2mN/A (instructor)\033[0m' if is_teacher else ('✓ CORRECT' if is_correct else '✗ WRONG')
     print(f"\n{R}{'━'*58}{X}")
     print(f"{R}{B}  ⚠   SECUREBANK — HTTP CREDENTIALS CAPTURED   ⚠{X}")
     print(f"{R}{'━'*58}{X}")
