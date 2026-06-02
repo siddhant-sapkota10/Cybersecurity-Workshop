@@ -82,9 +82,11 @@ game: dict = {
         'password': 'Sb@nk#S3cure99',
         'endpoint': '/bank/login',
     },
-    'students':    {},           # student_id → student_dict
-    'teacher_sid': None,         # socket sid of teacher
-    'winner_id':   None,         # student_id of first correct
+    'students':     {},           # student_id → student_dict
+    'teacher_sid':  None,         # socket sid of teacher
+    'winner_id':    None,         # student_id of first correct
+    'rounds':       [],           # completed round summaries
+    'round_number': 0,            # rounds completed so far
 }
 
 _lock = threading.Lock()
@@ -362,7 +364,7 @@ def _on_join(data):
             'endpoint': game['correct']['endpoint'],
         })
         if game['winner_id'] and game['winner_id'] in game['students']:
-            emit('winner_found', {'name': game['students'][game['winner_id']]['name']})
+            emit('winner_found', {'name': game['students'][game['winner_id']]['name'], 'winner_id': game['winner_id']})
 
 
 @socketio.on('rejoin')
@@ -409,7 +411,7 @@ def _on_rejoin(data):
             'leaderboard': _leaderboard_payload(),
         })
         if game['winner_id'] and game['winner_id'] in game['students']:
-            emit('winner_found', {'name': game['students'][game['winner_id']]['name']})
+            emit('winner_found', {'name': game['students'][game['winner_id']]['name'], 'winner_id': game['winner_id']})
 
 
 @socketio.on('submit_answer')
@@ -488,7 +490,7 @@ def _on_recovery_complete():
 
     if is_first:
         name    = game['students'][student_id]['name']
-        payload = {'name': name}
+        payload = {'name': name, 'winner_id': student_id}
         socketio.emit('winner_found', payload, to='game')
         socketio.emit('winner_found', payload, to='lobby')
         if game['teacher_sid']:
@@ -514,6 +516,7 @@ def _on_teacher_connect():
         'winner_id':      game['winner_id'],
         'timer_elapsed':  (int(time.time() - game['timer_start'])
                            if game['timer_start'] else 0),
+        'rounds':         game['rounds'],
     })
 
 
@@ -552,6 +555,18 @@ def _on_teacher_start():
 @socketio.on('teacher_reset')
 def _on_teacher_reset():
     with _lock:
+        # Save completed round to history if there was a winner
+        if game['winner_id'] and game['winner_id'] in game['students']:
+            winner = game['students'][game['winner_id']]
+            game['round_number'] += 1
+            game['rounds'].append({
+                'round':        game['round_number'],
+                'winner_name':  winner['name'],
+                'winner_time':  winner.get('elapsed_str', '—'),
+                'completed_at': datetime.now().strftime('%H:%M:%S'),
+                'participants': len(game['students']),
+            })
+
         for s in game['students'].values():
             s['status']   = 'waiting'
             s['attempts'] = 0
@@ -563,7 +578,24 @@ def _on_teacher_reset():
 
     socketio.emit('game_reset', {}, to='game')
     socketio.emit('game_reset', {}, to='lobby')
-    emit('reset_ack', {'students': _lobby_payload()})
+    emit('reset_ack', {'students': _lobby_payload(), 'rounds': game['rounds']})
+
+
+@socketio.on('teacher_factory_reset')
+def _on_teacher_factory_reset():
+    with _lock:
+        game['students']     = {}
+        game['status']       = 'lobby'
+        game['timer_start']  = None
+        game['winner_id']    = None
+        game['rounds']       = []
+        game['round_number'] = 0
+    _sid_to_student.clear()
+    _student_to_sid.clear()
+
+    socketio.emit('game_reset', {}, to='game')
+    socketio.emit('game_reset', {}, to='lobby')
+    emit('factory_reset_ack', {'students': [], 'rounds': []})
 
 
 @socketio.on('teacher_end_game')

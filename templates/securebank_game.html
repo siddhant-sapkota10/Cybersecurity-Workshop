@@ -244,6 +244,37 @@ table.tx-table{width:100%;border-collapse:collapse;}
   60%{box-shadow:0 0 0 10px rgba(63,185,80,0)}
 }
 
+/* ══ LOGIN LOADING ══ */
+#stateLoading{
+  display:none;min-height:100vh;background:var(--bg);
+  flex-direction:column;align-items:center;justify-content:center;gap:18px;
+}
+#stateLoading.show{display:flex;}
+.ld-ring{
+  width:56px;height:56px;border-radius:50%;
+  border:3px solid rgba(88,166,255,.1);border-top-color:var(--accent);
+  animation:ldSpin .85s linear infinite;
+}
+@keyframes ldSpin{to{transform:rotate(360deg)}}
+.ld-bank{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text);letter-spacing:.05em;}
+.ld-step{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;min-height:18px;}
+
+/* ══ PROCESSING OVERLAY ══ */
+#processingOverlay{
+  display:none;position:fixed;inset:0;z-index:8000;background:rgba(2,5,10,.96);
+  flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:40px;
+}
+#processingOverlay.show{display:flex;}
+.proc-ring{
+  width:64px;height:64px;border-radius:50%;
+  border:3px solid rgba(88,166,255,.12);border-top-color:var(--accent);
+  animation:ldSpin .85s linear infinite;
+}
+.proc-title{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);letter-spacing:.06em;}
+.proc-step{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.05em;min-height:20px;text-align:center;}
+.proc-track{width:300px;height:3px;background:rgba(88,166,255,.1);border-radius:2px;overflow:hidden;}
+.proc-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .55s ease;}
+
 /* ══ HELP BUTTON & MODAL ══ */
 #helpBtn{
   position:fixed;bottom:24px;right:24px;z-index:1000;
@@ -305,7 +336,7 @@ table.tx-table{width:100%;border-collapse:collapse;}
 .hm-step.active .hm-step-desc{color:#C9D1D9;}
 </style>
 </head>
-<body>
+<body data-port="{{ port }}">
 
 <!-- ══ LOGIN ══ -->
 <div id="stateLogin">
@@ -336,6 +367,14 @@ table.tx-table{width:100%;border-collapse:collapse;}
     </div>
     <div class="login-foot">🔒 256-bit SSL Encryption &nbsp;·&nbsp; SecureBank Ltd · AFSL 234567</div>
   </div>
+</div>
+
+
+<!-- ══ LOGIN LOADING ══ -->
+<div id="stateLoading">
+  <div class="ld-ring"></div>
+  <div class="ld-bank">Secure<span style="color:var(--accent)">Bank</span></div>
+  <div class="ld-step" id="ldStep">Authenticating…</div>
 </div>
 
 
@@ -499,13 +538,22 @@ table.tx-table{width:100%;border-collapse:collapse;}
 </div>
 
 
+<!-- ══ TRANSFER PROCESSING ══ -->
+<div id="processingOverlay">
+  <div class="proc-ring"></div>
+  <div class="proc-title">Processing Transfer</div>
+  <div class="proc-step" id="procStep">Initiating secure transfer…</div>
+  <div class="proc-track"><div class="proc-fill" id="procFill"></div></div>
+</div>
+
+
 <!-- ══ CELEBRATION OVERLAY ══ -->
 <div id="winnerOverlay">
   <div class="cel-stage">
     <div class="cel-eyebrow">St Edmunds College Canberra · Digital Forensics Unit</div>
     <div class="cel-congrats">CONGRATULATIONS</div>
     <div class="cel-winner-name" id="winnerName">—</div>
-    <div class="cel-won">YOU WON THE CHALLENGE</div>
+    <div class="cel-won" id="celWon">YOU WON THE CHALLENGE</div>
     <div class="cel-divider"></div>
     <div class="cel-mission" id="winnerDesc">
       Agent <strong>—</strong> from the St Edmunds College Canberra Digital Forensics Team
@@ -537,11 +585,11 @@ table.tx-table{width:100%;border-collapse:collapse;}
       <button class="hm-close" onclick="closeHelp()">✕</button>
     </div>
     <div class="hm-body">
-      <div class="hm-step" id="hm-step-1">
+      <div class="hm-step active" id="hm-step-1">
         <div class="hm-step-num">1</div>
         <div>
-          <div class="hm-step-title">Capture the Credentials</div>
-          <div class="hm-step-desc">Open Wireshark and start capturing on your network interface. Look for an HTTP POST request — the username and password will be visible in plain text. Use those credentials to sign in on this page.</div>
+          <div class="hm-step-title">Download the packet capture from Canvas</div>
+          <div class="hm-step-desc">Open your Canvas course page and download the packet capture file from today's workshop activity. Your instructor will guide you through finding the credentials.</div>
         </div>
       </div>
       <div class="hm-step" id="hm-step-2">
@@ -572,7 +620,7 @@ if (!raw) { window.location.href = '/join'; }
 const student = JSON.parse(raw || '{}');
 
 // ── Socket ───────────────────────────────────────────────
-const PORT   = {{ port }};
+const PORT   = parseInt(document.body.dataset.port) || 8081;
 const socket = io('http://' + window.location.hostname + ':' + PORT);
 
 socket.on('connect', () => {
@@ -586,13 +634,29 @@ socket.on('game_reset', () => {
 
 // Celebration — fires for EVERYONE on this page
 socket.on('winner_found', data => {
-  document.getElementById('winnerName').textContent = data.name;
-  document.getElementById('winnerDesc').innerHTML =
-    `Agent <strong>${data.name}</strong> from the St Edmunds College Canberra Digital Forensics Team
-    successfully infiltrated the banking systems of
-    <strong>MERIDIAN DIGITAL HOLDINGS PTY LTD</strong> and executed a forensic
-    fund recovery transfer, returning <strong>$47,250.00</strong> to St Edmunds College
-    Canberra — securing the stolen funds and completing the mission.`;
+  // Hide processing overlay if still showing
+  document.getElementById('processingOverlay').classList.remove('show');
+
+  const isWinner = data.winner_id && data.winner_id === student.student_id;
+
+  if (isWinner) {
+    document.getElementById('winnerName').textContent = 'YOU';
+    document.getElementById('celWon').textContent     = 'WON THE CHALLENGE';
+    document.getElementById('winnerDesc').innerHTML   =
+      `You successfully infiltrated the banking systems of
+      <strong>MERIDIAN DIGITAL HOLDINGS PTY LTD</strong> and executed a forensic
+      fund recovery transfer, returning <strong>$47,250.00</strong> to St Edmunds College
+      Canberra — securing the stolen funds and completing the mission.`;
+  } else {
+    document.getElementById('winnerName').textContent = data.name;
+    document.getElementById('celWon').textContent     = 'WON THE CHALLENGE';
+    document.getElementById('winnerDesc').innerHTML   =
+      `Agent <strong>${esc(data.name)}</strong> from the St Edmunds College Canberra Digital Forensics Team
+      successfully infiltrated the banking systems of
+      <strong>MERIDIAN DIGITAL HOLDINGS PTY LTD</strong> and executed a forensic
+      fund recovery transfer, returning <strong>$47,250.00</strong> to St Edmunds College
+      Canberra — securing the stolen funds and completing the mission.`;
+  }
 
   document.getElementById('winnerOverlay').classList.add('show');
 
@@ -681,10 +745,8 @@ async function submitLogin() {
     const data = await resp.json();
 
     if (data.correct) {
-      document.getElementById('dbNavMeta').textContent = 'Logged in as: ' + (student.name || 'Analyst');
-      document.getElementById('stateLogin').style.display     = 'none';
-      document.getElementById('stateDashboard').style.display = 'block';
-      setStep(2);
+      document.getElementById('stateLogin').style.display = 'none';
+      showLoginLoading();
     } else {
       btn.disabled    = false;
       btn.textContent = 'Sign In';
@@ -696,6 +758,33 @@ async function submitLogin() {
     btn.disabled    = false;
     btn.textContent = 'Sign In';
   }
+}
+
+function showLoginLoading() {
+  const el     = document.getElementById('stateLoading');
+  const stepEl = document.getElementById('ldStep');
+  el.classList.add('show');
+  const steps = [
+    'Authenticating credentials…',
+    'Loading account data…',
+    'Decrypting transaction history…',
+    'Access granted ✓',
+  ];
+  let i = 0;
+  function next() {
+    stepEl.textContent = steps[i++];
+    if (i < steps.length) {
+      setTimeout(next, 620);
+    } else {
+      setTimeout(() => {
+        el.classList.remove('show');
+        document.getElementById('dbNavMeta').textContent       = 'Logged in as: ' + (student.name || 'Analyst');
+        document.getElementById('stateDashboard').style.display = 'block';
+        setStep(2);
+      }, 700);
+    }
+  }
+  setTimeout(next, 150);
 }
 
 // ── Help modal ────────────────────────────────────────────
@@ -728,16 +817,45 @@ function showRecovery() {
 
 function submitRecovery() {
   const btn = document.getElementById('btnRecover');
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = 'Processing…';
+  showProcessing();
+}
 
-  // Tell server this student completed the recovery
-  socket.emit('recovery_complete');
+function showProcessing() {
+  const overlay = document.getElementById('processingOverlay');
+  const stepEl  = document.getElementById('procStep');
+  const fillEl  = document.getElementById('procFill');
+  overlay.classList.add('show');
+  const steps = [
+    { text: 'Initiating secure transfer…',              pct: 18 },
+    { text: 'Connecting to St Edmunds banking system…', pct: 40 },
+    { text: 'Verifying transfer authorisation…',        pct: 62 },
+    { text: 'Processing $47,250.00…',                   pct: 84 },
+    { text: 'Transfer complete ✓',                      pct: 100 },
+  ];
+  let i = 0;
+  function next() {
+    if (i >= steps.length) {
+      setTimeout(() => {
+        socket.emit('recovery_complete');
+        overlay.classList.remove('show');
+        document.getElementById('stateDashboard').style.display = 'none';
+        document.getElementById('stateSuccess').style.display   = 'block';
+        window.scrollTo(0, 0);
+      }, 600);
+      return;
+    }
+    stepEl.textContent = steps[i].text;
+    fillEl.style.width = steps[i].pct + '%';
+    i++;
+    setTimeout(next, 550);
+  }
+  next();
+}
 
-  // Show personal success screen immediately
-  document.getElementById('stateDashboard').style.display = 'none';
-  document.getElementById('stateSuccess').style.display   = 'block';
-  window.scrollTo(0, 0);
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 </body>

@@ -75,6 +75,15 @@
   .btn-join:disabled{background:var(--border2);color:var(--muted);cursor:not-allowed;}
   .card-foot{padding:10px 24px 16px;text-align:center;font-family:var(--mono);
     font-size:10px;color:rgba(48,54,61,.8);letter-spacing:.06em;}
+  .name-gen-wrap{display:flex;align-items:center;gap:10px;}
+  .name-display{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;
+    padding:11px 13px;color:var(--accent);font-family:var(--mono);font-size:14px;font-weight:600;
+    letter-spacing:.04em;}
+  .btn-reroll{flex-shrink:0;width:42px;height:42px;background:var(--bg);
+    border:1px solid var(--border2);border-radius:6px;color:var(--muted);
+    font-size:18px;cursor:pointer;transition:all .15s;
+    display:flex;align-items:center;justify-content:center;}
+  .btn-reroll:hover{border-color:var(--accent);color:var(--accent);}
 
   /* LOBBY */
   #stateLobby{display:none;}
@@ -113,7 +122,7 @@
     font-size:10px;color:rgba(48,54,61,.8);letter-spacing:.06em;}
 </style>
 </head>
-<body>
+<body data-port="{{ port }}">
 <div class="strip">
   <div class="strip-brand">SECURE<span>BANK</span> · FORENSICS DIVISION</div>
   <div class="ex-badge">EXERCISE</div>
@@ -140,48 +149,19 @@
           <div class="step-num">1</div>
           <div class="step-body">
             <div class="step-title">Download the packet capture from Canvas</div>
-            <div class="step-desc">Open your Canvas course page and download the file <code>securebank_capture.pcapng</code> from today's workshop activity.</div>
+            <div class="step-desc">Open your Canvas course page and download the packet capture file from today's workshop activity. Your instructor will tell you which file to open.</div>
             <span class="step-tag tag-canvas">Canvas LMS</span>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-body">
-            <div class="step-title">Open the capture in Wireshark</div>
-            <div class="step-desc">Launch Wireshark and open the downloaded file. Apply the display filter <code>http</code> to isolate HTTP traffic from the noise.</div>
-            <span class="step-tag tag-wireshark">Wireshark</span>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-body">
-            <div class="step-title">Find the stolen credentials</div>
-            <div class="step-desc">Look for a <code>POST</code> request to <code>/bank/login</code>. Inspect the packet and locate the <code>username</code> and <code>password</code> fields in the HTTP form data — these are the attacker's credentials.</div>
-            <span class="step-tag tag-wireshark">Wireshark</span>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div class="step-body">
-            <div class="step-title">Log into the hacker's SecureBank account</div>
-            <div class="step-desc">When the instructor starts the game, use the credentials you found to log into the SecureBank portal below. You'll gain access to the attacker's account dashboard.</div>
-            <span class="step-tag tag-securebank">SecureBank Portal</span>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">5</div>
-          <div class="step-body">
-            <div class="step-title">Transfer the funds back to St Edmunds</div>
-            <div class="step-desc">Inside the dashboard, locate the stolen <code>$47,250.00</code> transaction and initiate a return transfer to St Edmunds College Canberra. First to recover the funds wins.</div>
-            <span class="step-tag tag-securebank">SecureBank Portal</span>
           </div>
         </div>
       </div>
 
       <div class="divider"></div>
       <div class="field">
-        <label>Your Name</label>
-        <input type="text" id="nameInput" placeholder="Enter your full name" autocomplete="off" spellcheck="false">
+        <label>Agent Codename</label>
+        <div class="name-gen-wrap">
+          <div class="name-display" id="nameDisplay">—</div>
+          <button class="btn-reroll" onclick="rerollName()" title="Generate new codename">↻</button>
+        </div>
       </div>
       <button class="btn-join" id="btnJoin" onclick="joinInvestigation()">Join Investigation →</button>
     </div>
@@ -202,33 +182,12 @@
       </div>
     </div>
     <div class="lobby-checklist">
-      <div class="lobby-checklist-label">While you wait — complete these steps</div>
+      <div class="lobby-checklist-label">While you wait</div>
       <div class="check-item">
         <div class="check-icon">📥</div>
         <div class="check-body">
           <div class="check-title">Download the packet capture from Canvas</div>
-          <div class="check-hint">Find <code>securebank_capture.pcapng</code> in today's workshop activity and save it to your desktop.</div>
-        </div>
-      </div>
-      <div class="check-item">
-        <div class="check-icon">🦈</div>
-        <div class="check-body">
-          <div class="check-title">Open the file in Wireshark</div>
-          <div class="check-hint">Launch Wireshark → File → Open. Once loaded, type <code>http</code> in the display filter bar and press Enter.</div>
-        </div>
-      </div>
-      <div class="check-item">
-        <div class="check-icon">🔎</div>
-        <div class="check-body">
-          <div class="check-title">Find the POST request to <code>/bank/login</code></div>
-          <div class="check-hint">Look for a packet with <code>POST /bank/login</code> in the Info column. Click it, then expand <strong>HTML Form URL Encoded</strong> in the packet details below to reveal the credentials.</div>
-        </div>
-      </div>
-      <div class="check-item">
-        <div class="check-icon">📝</div>
-        <div class="check-body">
-          <div class="check-title">Write down the username and password</div>
-          <div class="check-hint">Note the <code>username</code> and <code>password</code> values exactly — you'll need them the moment the game starts.</div>
+          <div class="check-hint">Open your Canvas course page and download the packet capture file from today's workshop activity. Your instructor will guide you through the rest.</div>
         </div>
       </div>
     </div>
@@ -306,20 +265,39 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-const PORT   = {{ port }};
+const PORT   = parseInt(document.body.dataset.port) || 8081;
 const socket = io('http://' + window.location.hostname + ':' + PORT);
 
-function joinInvestigation() {
-  const name = document.getElementById('nameInput').value.trim();
-  if (!name) { document.getElementById('nameInput').focus(); return; }
-  document.getElementById('btnJoin').disabled    = true;
-  document.getElementById('btnJoin').textContent = 'Connecting…';
-  socket.emit('join', { name: name, employeeId: '' });
+// ── Random codename generator ─────────────────────────────
+const ADJS  = ['Shadow','Phantom','Ghost','Silent','Cyber','Digital','Stealth','Binary',
+               'Neon','Sigma','Alpha','Rogue','Echo','Apex','Quantum','Null','Hex',
+               'Veiled','Crypt','Razor','Covert','Delta','Onyx','Prism','Veil'];
+const NOUNS = ['Wolf','Hawk','Fox','Eagle','Viper','Falcon','Lynx','Raven','Cobra',
+               'Shark','Tiger','Panther','Cipher','Vector','Byte','Proxy','Glitch',
+               'Delta','Spectre','Nexus','Mantis','Jackal','Hydra','Wraith','Talon'];
+
+let currentName = '';
+
+function genName() {
+  const a = ADJS[Math.floor(Math.random() * ADJS.length)];
+  const n = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  return a + ' ' + n;
 }
 
-document.getElementById('nameInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') joinInvestigation();
-});
+function rerollName() {
+  currentName = genName();
+  document.getElementById('nameDisplay').textContent = currentName;
+}
+
+rerollName();
+
+// ── Join ──────────────────────────────────────────────────
+function joinInvestigation() {
+  if (!currentName) return;
+  document.getElementById('btnJoin').disabled    = true;
+  document.getElementById('btnJoin').textContent = 'Connecting…';
+  socket.emit('join', { name: currentName, employeeId: '' });
+}
 
 socket.on('join_confirmed', data => {
   sessionStorage.setItem('sb_student', JSON.stringify({ student_id: data.student_id, name: data.name }));
@@ -328,13 +306,23 @@ socket.on('join_confirmed', data => {
   document.getElementById('stateLobby').style.display = 'block';
 });
 
-socket.on('game_start',   () => { window.location.href = '/game'; });
-socket.on('redirect',     d  => { window.location.href = d.url;   });
+socket.on('game_start', () => { window.location.href = '/game'; });
+socket.on('redirect',   d  => { window.location.href = d.url;   });
+
+socket.on('game_reset', () => {
+  sessionStorage.removeItem('sb_student');
+  document.getElementById('stateLobby').style.display = 'none';
+  document.getElementById('stateForm').style.display  = 'block';
+  document.getElementById('btnJoin').disabled          = false;
+  document.getElementById('btnJoin').textContent       = 'Join Investigation →';
+  rerollName();
+});
 
 socket.on('winner_found', data => {
-  document.getElementById('winnerName').textContent = data.name;
+  const name = data.name || '—';
+  document.getElementById('winnerName').textContent = name;
   document.getElementById('winnerDesc').innerHTML =
-    `Agent <strong>${data.name}</strong> from the St Edmunds College Canberra Digital Forensics Team
+    `Agent <strong>${name}</strong> from the St Edmunds College Canberra Digital Forensics Team
     successfully infiltrated the banking systems of
     <strong>MERIDIAN DIGITAL HOLDINGS PTY LTD</strong> and executed a forensic
     fund recovery transfer, returning <strong>$47,250.00</strong> to St Edmunds College

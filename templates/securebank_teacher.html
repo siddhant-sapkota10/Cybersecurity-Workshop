@@ -64,6 +64,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .btn-start:disabled{background:var(--border2);color:var(--muted);cursor:not-allowed;}
 .btn-reset{background:transparent;border:1px solid var(--border2);color:var(--muted);}
 .btn-reset:hover{border-color:var(--text);color:var(--text);}
+.btn-danger{background:transparent;border:1px solid rgba(248,81,73,.35);color:var(--red);}
+.btn-danger:hover{border-color:var(--red);background:rgba(248,81,73,.08);}
+
+/* Round history */
+.round-list{max-height:300px;overflow-y:auto;}
+.round-list::-webkit-scrollbar{width:3px;}
+.round-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.round-entry{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);}
+.round-entry:last-child{border-bottom:none;}
+.round-badge{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--muted);
+  background:var(--surface2);border:1px solid var(--border2);padding:2px 7px;border-radius:3px;flex-shrink:0;}
+.round-winner{flex:1;font-weight:600;font-size:13px;color:var(--text);}
+.round-meta{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.5;flex-shrink:0;}
+.round-crown{color:#FFD700;font-size:14px;flex-shrink:0;}
 
 /* Status msg */
 .status-msg{font-family:var(--mono);font-size:11px;padding:7px 10px;border-radius:4px;
@@ -154,7 +168,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
       <div class="panel-head">Game Controls</div>
       <div class="panel-body">
         <button class="btn btn-start" id="btnStart" onclick="startGame()">▶ Start Game</button>
-        <button class="btn btn-reset" onclick="resetGame()">↺ Reset</button>
+        <button class="btn btn-reset" onclick="resetGame()">↺ New Round</button>
+        <button class="btn btn-danger" onclick="factoryReset()">⚠ Factory Reset</button>
       </div>
     </div>
 
@@ -180,6 +195,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
       </div>
       <div class="student-list" id="studentList">
         <div class="empty-state">No students connected yet.<br>Share: <strong>http://[your-ip]:8081/join</strong></div>
+      </div>
+    </div>
+
+    <!-- Round History -->
+    <div class="panel">
+      <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Round History</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)" id="roundCount">0 rounds</span>
+      </div>
+      <div class="round-list" id="roundList">
+        <div class="empty-state">No rounds completed yet.</div>
       </div>
     </div>
 
@@ -209,6 +235,7 @@ socket.on('full_state', data => {
     document.getElementById('cfgPassword').value = data.correct.password || '';
   }
   if (data.students) renderStudents(data.students);
+  if (data.rounds)   renderRounds(data.rounds);
   setPhase(data.status || 'lobby');
 });
 
@@ -236,14 +263,30 @@ function startGame() {
   socket.emit('teacher_start');
 }
 function resetGame() {
-  if (!confirm('Reset the game? All progress will be cleared.')) return;
+  if (!confirm('Start a new round? Current round will be saved to history and the game will reset.')) return;
   socket.emit('teacher_reset');
+}
+function factoryReset() {
+  if (!confirm('Factory reset? This will wipe ALL students, scores, and round history permanently.')) return;
+  socket.emit('teacher_factory_reset');
 }
 
 socket.on('game_started', () => setPhase('running'));
 socket.on('game_reset',   () => {
   setPhase('lobby');
   document.getElementById('winnerBanner').classList.remove('show');
+});
+socket.on('reset_ack', data => {
+  setPhase('lobby');
+  document.getElementById('winnerBanner').classList.remove('show');
+  if (data.students) renderStudents(data.students);
+  if (data.rounds)   renderRounds(data.rounds);
+});
+socket.on('factory_reset_ack', data => {
+  setPhase('lobby');
+  document.getElementById('winnerBanner').classList.remove('show');
+  renderStudents([]);
+  renderRounds([]);
 });
 socket.on('end_ack',    () => setPhase('ended'));
 socket.on('game_ended', () => setPhase('ended'));
@@ -279,6 +322,23 @@ function renderStudents(list) {
       <span class="s-status ${cls}">${lbl}</span>
     </div>`;
   }).join('');
+}
+
+// ── Round history ─────────────────────────────────
+function renderRounds(list) {
+  const el = document.getElementById('roundList');
+  document.getElementById('roundCount').textContent = list.length + ' round' + (list.length !== 1 ? 's' : '');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">No rounds completed yet.</div>';
+    return;
+  }
+  el.innerHTML = [...list].reverse().map(r => `
+    <div class="round-entry">
+      <div class="round-badge">R${r.round}</div>
+      <div class="round-crown">🏆</div>
+      <div class="round-winner">${esc(r.winner_name)}</div>
+      <div class="round-meta">${esc(r.winner_time)}<br>${esc(r.completed_at)} · ${r.participants}p</div>
+    </div>`).join('');
 }
 
 // ── Winner ────────────────────────────────────────
