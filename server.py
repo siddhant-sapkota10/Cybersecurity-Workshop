@@ -87,6 +87,7 @@ game: dict = {
     'winner_id':    None,         # student_id of first correct
     'rounds':       [],           # completed round summaries
     'round_number': 0,            # rounds completed so far
+    'leaderboard':  {},           # student_id → {name, wins}  — persists across rounds
 }
 
 _lock = threading.Lock()
@@ -134,6 +135,14 @@ def _leaderboard_payload() -> list:
     ]
     entries.sort(key=_key)
     return entries
+
+
+def _win_leaderboard() -> list:
+    return sorted(
+        [{'student_id': k, 'name': v['name'], 'wins': v['wins']}
+         for k, v in game['leaderboard'].items()],
+        key=lambda x: -x['wins'],
+    )
 
 
 def _elapsed_str(secs: int) -> str:
@@ -364,7 +373,11 @@ def _on_join(data):
             'endpoint': game['correct']['endpoint'],
         })
         if game['winner_id'] and game['winner_id'] in game['students']:
-            emit('winner_found', {'name': game['students'][game['winner_id']]['name'], 'winner_id': game['winner_id']})
+            emit('winner_found', {
+                'name':           game['students'][game['winner_id']]['name'],
+                'winner_id':      game['winner_id'],
+                'win_leaderboard': _win_leaderboard(),
+            })
 
 
 @socketio.on('rejoin')
@@ -411,7 +424,11 @@ def _on_rejoin(data):
             'leaderboard': _leaderboard_payload(),
         })
         if game['winner_id'] and game['winner_id'] in game['students']:
-            emit('winner_found', {'name': game['students'][game['winner_id']]['name'], 'winner_id': game['winner_id']})
+            emit('winner_found', {
+                'name':            game['students'][game['winner_id']]['name'],
+                'winner_id':       game['winner_id'],
+                'win_leaderboard': _win_leaderboard(),
+            })
 
 
 @socketio.on('submit_answer')
@@ -489,8 +506,15 @@ def _on_recovery_complete():
             game['status'] = 'ended'
 
     if is_first:
-        name    = game['students'][student_id]['name']
-        payload = {'name': name, 'winner_id': student_id}
+        name = game['students'][student_id]['name']
+        # Update persistent win leaderboard
+        lb = game['leaderboard']
+        if student_id not in lb:
+            lb[student_id] = {'name': name, 'wins': 0}
+        lb[student_id]['name'] = name
+        lb[student_id]['wins'] += 1
+
+        payload = {'name': name, 'winner_id': student_id, 'win_leaderboard': _win_leaderboard()}
         socketio.emit('winner_found', payload, to='game')
         socketio.emit('winner_found', payload, to='lobby')
         if game['teacher_sid']:
@@ -517,6 +541,7 @@ def _on_teacher_connect():
         'timer_elapsed':  (int(time.time() - game['timer_start'])
                            if game['timer_start'] else 0),
         'rounds':         game['rounds'],
+        'win_leaderboard': _win_leaderboard(),
     })
 
 
@@ -547,7 +572,7 @@ def _on_teacher_start():
 
     payload = {'duration': game['timer_duration'], 'elapsed': 0}
     socketio.emit('game_start', payload, to='lobby')
-    socketio.emit('game_start', payload, to='game')
+    socketio.emit('game_start', payload, to='game')  # also resets students waiting for next round
     emit('game_started', {'timer_duration': game['timer_duration']})
     emit('leaderboard_update', {'entries': _leaderboard_payload()})
 
@@ -576,9 +601,11 @@ def _on_teacher_reset():
         game['timer_start'] = None
         game['winner_id']   = None
 
-    socketio.emit('game_reset', {}, to='game')
+    # Students already on /game page get new_round (stay on page, reset to login)
+    socketio.emit('new_round', {'leaderboard': _win_leaderboard(), 'round_number': game['round_number']}, to='game')
+    # Students still in the lobby reset normally
     socketio.emit('game_reset', {}, to='lobby')
-    emit('reset_ack', {'students': _lobby_payload(), 'rounds': game['rounds']})
+    emit('reset_ack', {'students': _lobby_payload(), 'rounds': game['rounds'], 'leaderboard': _win_leaderboard()})
 
 
 @socketio.on('teacher_factory_reset')
@@ -590,12 +617,13 @@ def _on_teacher_factory_reset():
         game['winner_id']    = None
         game['rounds']       = []
         game['round_number'] = 0
+        game['leaderboard']  = {}
     _sid_to_student.clear()
     _student_to_sid.clear()
 
     socketio.emit('game_reset', {}, to='game')
     socketio.emit('game_reset', {}, to='lobby')
-    emit('factory_reset_ack', {'students': [], 'rounds': []})
+    emit('factory_reset_ack', {'students': [], 'rounds': [], 'leaderboard': []})
 
 
 @socketio.on('teacher_end_game')

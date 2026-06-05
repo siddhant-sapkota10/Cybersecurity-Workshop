@@ -67,8 +67,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .btn-danger{background:transparent;border:1px solid rgba(248,81,73,.35);color:var(--red);}
 .btn-danger:hover{border-color:var(--red);background:rgba(248,81,73,.08);}
 
+/* Win leaderboard */
+.lb-list{max-height:220px;overflow-y:auto;}
+.lb-list::-webkit-scrollbar{width:3px;}
+.lb-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.lb-entry{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);}
+.lb-entry:last-child{border-bottom:none;}
+.lb-medal{font-size:16px;width:24px;text-align:center;flex-shrink:0;}
+.lb-name{flex:1;font-weight:600;font-size:13px;}
+.lb-wins{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--green);flex-shrink:0;}
+.lb-wins-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:3px;}
+
 /* Round history */
-.round-list{max-height:300px;overflow-y:auto;}
+.round-list{max-height:220px;overflow-y:auto;}
 .round-list::-webkit-scrollbar{width:3px;}
 .round-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 .round-entry{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);}
@@ -198,6 +209,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
       </div>
     </div>
 
+    <!-- Win Leaderboard -->
+    <div class="panel">
+      <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Win Leaderboard</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)" id="winLbCount">0 wins</span>
+      </div>
+      <div class="lb-list" id="winLbList">
+        <div class="empty-state">No wins recorded yet.</div>
+      </div>
+    </div>
+
     <!-- Round History -->
     <div class="panel">
       <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center">
@@ -234,8 +256,9 @@ socket.on('full_state', data => {
     document.getElementById('cfgUsername').value = data.correct.username || '';
     document.getElementById('cfgPassword').value = data.correct.password || '';
   }
-  if (data.students) renderStudents(data.students);
-  if (data.rounds)   renderRounds(data.rounds);
+  if (data.students)       renderStudents(data.students);
+  if (data.rounds)         renderRounds(data.rounds);
+  if (data.win_leaderboard) renderWinLeaderboard(data.win_leaderboard);
   setPhase(data.status || 'lobby');
 });
 
@@ -279,14 +302,16 @@ socket.on('game_reset',   () => {
 socket.on('reset_ack', data => {
   setPhase('lobby');
   document.getElementById('winnerBanner').classList.remove('show');
-  if (data.students) renderStudents(data.students);
-  if (data.rounds)   renderRounds(data.rounds);
+  if (data.students)  renderStudents(data.students);
+  if (data.rounds)    renderRounds(data.rounds);
+  if (data.leaderboard) renderWinLeaderboard(data.leaderboard);
 });
 socket.on('factory_reset_ack', data => {
   setPhase('lobby');
   document.getElementById('winnerBanner').classList.remove('show');
   renderStudents([]);
   renderRounds([]);
+  renderWinLeaderboard([]);
 });
 socket.on('end_ack',    () => setPhase('ended'));
 socket.on('game_ended', () => setPhase('ended'));
@@ -324,6 +349,24 @@ function renderStudents(list) {
   }).join('');
 }
 
+// ── Win leaderboard ───────────────────────────────
+function renderWinLeaderboard(list) {
+  const el    = document.getElementById('winLbList');
+  const total = list.reduce((s, e) => s + e.wins, 0);
+  document.getElementById('winLbCount').textContent = total + ' win' + (total !== 1 ? 's' : '');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state">No wins recorded yet.</div>';
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = list.map((e, i) => `
+    <div class="lb-entry">
+      <div class="lb-medal">${medals[i] || '#' + (i + 1)}</div>
+      <div class="lb-name">${esc(e.name)}</div>
+      <div class="lb-wins">${e.wins}<span class="lb-wins-lbl">win${e.wins !== 1 ? 's' : ''}</span></div>
+    </div>`).join('');
+}
+
 // ── Round history ─────────────────────────────────
 function renderRounds(list) {
   const el = document.getElementById('roundList');
@@ -345,6 +388,7 @@ function renderRounds(list) {
 socket.on('winner_found', data => {
   document.getElementById('winnerName').textContent = data.name;
   document.getElementById('winnerBanner').classList.add('show');
+  if (data.win_leaderboard) renderWinLeaderboard(data.win_leaderboard);
 });
 
 // ── Helpers ───────────────────────────────────────
