@@ -684,10 +684,10 @@ function renderCelLeaderboard(list) {
     </div>`).join('');
 }
 
-// ── New round: teacher reset, students stay on page ───────
-socket.on('new_round', data => {
-  if (data.leaderboard) renderCelLeaderboard(data.leaderboard);
-  // Leaderboard overlay stays visible; game_start will move students to login
+// ── New round: send students back to lobby waiting screen ─
+socket.on('new_round', () => {
+  // Session (student_id + name) is preserved so /join auto-rejoins them
+  window.location.href = '/join';
 });
 
 // ── Game start: move students from overlay back to login ──

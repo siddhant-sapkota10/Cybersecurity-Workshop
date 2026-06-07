@@ -120,6 +120,18 @@
     background:rgba(88,166,255,.08);padding:1px 4px;border-radius:3px;}
   .lobby-foot{padding:0 28px 18px;text-align:center;font-family:var(--mono);
     font-size:10px;color:rgba(48,54,61,.8);letter-spacing:.06em;}
+
+  /* WIN LEADERBOARD (between rounds) */
+  .lobby-lb{padding:0 28px 20px;}
+  .lobby-lb-label{font-family:var(--mono);font-size:10px;font-weight:600;
+    letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+  .lobby-lb-row{display:flex;align-items:center;gap:12px;padding:9px 0;
+    border-bottom:1px solid var(--border);}
+  .lobby-lb-row:last-child{border-bottom:none;}
+  .lobby-lb-row.lb-first .lobby-lb-name{color:#FFD700;}
+  .lobby-lb-medal{font-size:15px;width:22px;text-align:center;flex-shrink:0;}
+  .lobby-lb-name{flex:1;font-family:var(--mono);font-size:12px;color:var(--text);}
+  .lobby-lb-wins{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--green);flex-shrink:0;}
 </style>
 </head>
 <body data-port="{{ port }}">
@@ -176,11 +188,18 @@
       <div class="lobby-status">Analyst Registered</div>
       <div class="lobby-name" id="lobbyName">—</div>
       <div class="lobby-role">Digital Forensics Unit · St Edmunds College Canberra</div>
-      <div class="lobby-wait">
+      <div class="lobby-wait" id="lobbyWaitMsg">
         <div class="wait-dot"></div>
         Waiting for instructor to start — complete the steps below while you wait
       </div>
     </div>
+
+    <!-- Win leaderboard — shown between rounds -->
+    <div class="lobby-lb" id="lobbyLb" style="display:none">
+      <div class="lobby-lb-label">Win Leaderboard</div>
+      <div id="lobbyLbRows"></div>
+    </div>
+
     <div class="lobby-checklist">
       <div class="lobby-checklist-label">While you wait</div>
       <div class="check-item">
@@ -268,6 +287,27 @@
 const PORT   = parseInt(document.body.dataset.port) || 8081;
 const socket = io('http://' + window.location.hostname + ':' + PORT);
 
+// Auto-rejoin if returning from a completed round (session preserved)
+socket.on('connect', () => {
+  const raw = sessionStorage.getItem('sb_student');
+  if (!raw) return;
+  try {
+    const s = JSON.parse(raw);
+    if (s && s.student_id) socket.emit('rejoin_lobby', { student_id: s.student_id });
+  } catch(_) {}
+});
+
+socket.on('rejoin_lobby_confirmed', data => {
+  document.getElementById('lobbyName').textContent    = data.name;
+  document.getElementById('stateForm').style.display  = 'none';
+  document.getElementById('stateLobby').style.display = 'block';
+  document.getElementById('winnerOverlay').style.display = 'none';
+  document.getElementById('lobbyWaitMsg').innerHTML =
+    '<div class="wait-dot"></div>Waiting for instructor to start the next round…';
+  if (data.win_leaderboard) renderLobbyLeaderboard(data.win_leaderboard);
+  if (data.game_status === 'running') window.location.href = '/game';
+});
+
 // ── Random codename generator ─────────────────────────────
 const ADJS  = ['Shadow','Phantom','Ghost','Silent','Cyber','Digital','Stealth','Binary',
                'Neon','Sigma','Alpha','Rogue','Echo','Apex','Quantum','Null','Hex',
@@ -309,12 +349,29 @@ socket.on('join_confirmed', data => {
 socket.on('game_start', () => { window.location.href = '/game'; });
 socket.on('redirect',   d  => { window.location.href = d.url;   });
 
+// new_round: soft reset — keep name and session, just return to lobby waiting state
+socket.on('new_round', data => {
+  document.getElementById('winnerOverlay').style.display = 'none';
+  if (data.leaderboard) renderLobbyLeaderboard(data.leaderboard);
+  // If they somehow still have a session but are on the form, switch to lobby
+  const raw = sessionStorage.getItem('sb_student');
+  if (raw) {
+    document.getElementById('stateForm').style.display  = 'none';
+    document.getElementById('stateLobby').style.display = 'block';
+    document.getElementById('lobbyWaitMsg').innerHTML =
+      '<div class="wait-dot"></div>Waiting for instructor to start the next round…';
+  }
+});
+
+// game_reset: factory reset only — wipe everything and show fresh join form
 socket.on('game_reset', () => {
   sessionStorage.removeItem('sb_student');
-  document.getElementById('stateLobby').style.display = 'none';
-  document.getElementById('stateForm').style.display  = 'block';
-  document.getElementById('btnJoin').disabled          = false;
-  document.getElementById('btnJoin').textContent       = 'Join Investigation →';
+  document.getElementById('winnerOverlay').style.display = 'none';
+  document.getElementById('lobbyLb').style.display       = 'none';
+  document.getElementById('stateLobby').style.display    = 'none';
+  document.getElementById('stateForm').style.display     = 'block';
+  document.getElementById('btnJoin').disabled            = false;
+  document.getElementById('btnJoin').textContent         = 'Join Investigation →';
   rerollName();
 });
 
@@ -352,6 +409,23 @@ socket.on('winner_found', data => {
 
   launchConfetti();
 });
+
+function renderLobbyLeaderboard(list) {
+  const lb = document.getElementById('lobbyLb');
+  if (!list || !list.length) { lb.style.display = 'none'; return; }
+  lb.style.display = 'block';
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('lobbyLbRows').innerHTML = list.slice(0, 5).map((e, i) => `
+    <div class="lobby-lb-row${i === 0 ? ' lb-first' : ''}">
+      <div class="lobby-lb-medal">${medals[i] || '#' + (i + 1)}</div>
+      <div class="lobby-lb-name">${esc(e.name)}</div>
+      <div class="lobby-lb-wins">${e.wins} win${e.wins !== 1 ? 's' : ''}</div>
+    </div>`).join('');
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 function launchConfetti() {
   const COLORS = ['#FFD700','#3FB950','#58A6FF','#BC8CFF','#E6EDF3','#F0883E'];

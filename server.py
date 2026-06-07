@@ -78,8 +78,8 @@ game: dict = {
     'timer_duration': 600,       # seconds
     'timer_start':    None,      # float timestamp
     'correct': {
-        'username': 'soc.admin.rowe',
-        'password': 'Sb@nk#S3cure99',
+        'username': 'ShinyHunter',
+        'password': 'bestblackhatgroupintheworld67',
         'endpoint': '/bank/login',
     },
     'students':     {},           # student_id → student_dict
@@ -431,6 +431,35 @@ def _on_rejoin(data):
             })
 
 
+@socketio.on('rejoin_lobby')
+def _on_rejoin_lobby(data):
+    """Student returns to /join after a round ends — reconnect and resume lobby waiting state."""
+    student_id = str(data.get('student_id', ''))
+    sid        = request.sid
+
+    with _lock:
+        if student_id not in game['students']:
+            emit('error', {'msg': 'Session expired — please rejoin.'})
+            return
+        s = game['students'][student_id]
+        old = s.get('socket_id')
+        if old and old in _sid_to_student:
+            del _sid_to_student[old]
+        s['socket_id']              = sid
+        _sid_to_student[sid]        = student_id
+        _student_to_sid[student_id] = sid
+        s['status'] = 'waiting'
+
+    join_room('lobby')
+    emit('rejoin_lobby_confirmed', {
+        'name':            game['students'][student_id]['name'],
+        'game_status':     game['status'],
+        'win_leaderboard': _win_leaderboard(),
+    })
+    if game['teacher_sid']:
+        socketio.emit('lobby_update', {'students': _lobby_payload()}, to=game['teacher_sid'])
+
+
 @socketio.on('submit_answer')
 def _on_submit(data):
     """Student submits their credential guess."""
@@ -601,10 +630,10 @@ def _on_teacher_reset():
         game['timer_start'] = None
         game['winner_id']   = None
 
-    # Students already on /game page get new_round (stay on page, reset to login)
-    socketio.emit('new_round', {'leaderboard': _win_leaderboard(), 'round_number': game['round_number']}, to='game')
-    # Students still in the lobby reset normally
-    socketio.emit('game_reset', {}, to='lobby')
+    payload = {'leaderboard': _win_leaderboard(), 'round_number': game['round_number']}
+    # All students (game and lobby rooms) get new_round — they move back to the lobby waiting screen
+    socketio.emit('new_round', payload, to='game')
+    socketio.emit('new_round', payload, to='lobby')
     emit('reset_ack', {'students': _lobby_payload(), 'rounds': game['rounds'], 'leaderboard': _win_leaderboard()})
 
 

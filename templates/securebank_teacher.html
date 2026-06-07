@@ -163,11 +163,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
       <div class="panel-body">
         <div class="field">
           <label>Username</label>
-          <input type="text" id="cfgUsername" value="soc.admin.rowe">
+          <input type="text" id="cfgUsername" value="ShinyHunter">
         </div>
         <div class="field">
           <label>Password</label>
-          <input type="text" id="cfgPassword" value="Sb@nk#S3cure99">
+          <input type="text" id="cfgPassword" value="bestblackhatgroupintheworld67">
         </div>
         <button class="btn btn-save" onclick="saveCreds()">Save Credentials</button>
         <div class="status-msg" id="saveMsg"></div>
@@ -180,7 +180,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
       <div class="panel-body">
         <button class="btn btn-start" id="btnStart" onclick="startGame()">▶ Start Game</button>
         <button class="btn btn-reset" onclick="resetGame()">↺ New Round</button>
-        <button class="btn btn-danger" onclick="factoryReset()">⚠ Factory Reset</button>
+        <button class="btn btn-danger" onclick="factoryReset()">⚠ Clear All Data</button>
       </div>
     </div>
 
@@ -290,7 +290,7 @@ function resetGame() {
   socket.emit('teacher_reset');
 }
 function factoryReset() {
-  if (!confirm('Factory reset? This will wipe ALL students, scores, and round history permanently.')) return;
+  if (!confirm('Clear all data? This will permanently remove ALL students, scores, and round history.')) return;
   socket.emit('teacher_factory_reset');
 }
 
